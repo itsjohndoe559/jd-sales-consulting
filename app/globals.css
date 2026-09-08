@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background: #fbfbfa;
+  color: #14171a;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e6e8ea;
+  border-radius: 10px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
