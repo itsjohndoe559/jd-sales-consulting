@@ -43,7 +43,7 @@ export default async function TransactionsPage({
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 flex-wrap">
         {FILTERS.map((f) => (
           <Link
             key={f}
@@ -60,7 +60,7 @@ export default async function TransactionsPage({
       </div>
 
       <div className="card p-4">
-        <div className="grid grid-cols-12 text-[11px] text-slate uppercase pb-2 border-b border-line">
+        <div className="hidden md:grid grid-cols-12 text-[11px] text-slate uppercase pb-2 border-b border-line">
           <div className="col-span-3">Date</div>
           <div className="col-span-5">Items Sold</div>
           <div className="col-span-2">Channel</div>

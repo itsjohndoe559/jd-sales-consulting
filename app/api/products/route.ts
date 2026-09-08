@@ -14,6 +14,44 @@ export async function GET() {
   return NextResponse.json({ products: data });
 }
 
+// Add a brand new SKU to the catalog.
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { sku, name, price, cost } = body as {
+    sku: string;
+    name: string;
+    price: number;
+    cost?: number | null;
+  };
+
+  if (!sku || !name || price === undefined || price === null) {
+    return NextResponse.json(
+      { error: 'sku, name, and price are required' },
+      { status: 400 }
+    );
+  }
+
+  const sb = supabaseServer();
+  const { data, error } = await sb
+    .from('products')
+    .insert({
+      sku: sku.trim(),
+      name: name.trim(),
+      price,
+      cost: cost ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    const message = error.message.includes('duplicate')
+      ? `SKU "${sku}" already exists.`
+      : error.message;
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+  return NextResponse.json({ product: data });
+}
+
 // Update a product's price and/or cost (used from the Inventory page).
 export async function PATCH(req: NextRequest) {
   const body = await req.json();

@@ -11,7 +11,13 @@ const NAV = [
   { href: '/invoices', label: 'Invoices' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  open,
+  onNavigate,
+}: {
+  open: boolean;
+  onNavigate: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -22,7 +28,11 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-56 shrink-0 bg-ink text-white min-h-screen flex flex-col">
+    <aside
+      className={`fixed inset-y-0 left-0 w-64 bg-ink text-white flex flex-col z-50 transform transition-transform duration-200 md:static md:translate-x-0 md:shrink-0 ${
+        open ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       <div className="px-5 py-6">
         <div className="text-2xl font-bold leading-none">
           <span className="text-jdred">J</span>
@@ -41,6 +51,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={`block px-3 py-2 mb-1 rounded text-sm border-l-2 ${
                 active
                   ? 'bg-white/10 border-jdred text-white'
