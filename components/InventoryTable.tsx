@@ -134,6 +134,7 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
               <div className="flex-1">
                 <div className="text-xs text-slate mb-1">Cost</div>
                 <input
+                  key={`cost-${p.sku}-${p.cost}`}
                   type="number"
                   defaultValue={p.cost ?? ''}
                   placeholder="—"
@@ -144,6 +145,7 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
               <div className="flex-1">
                 <div className="text-xs text-slate mb-1">Price</div>
                 <input
+                  key={`price-${p.sku}-${p.price}`}
                   type="number"
                   defaultValue={p.price}
                   onBlur={(e) => saveField(p.sku, 'price', e.target.value)}
@@ -195,6 +197,7 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
                 <td className="py-2 text-slate">{p.sku}</td>
                 <td className="py-2">
                   <input
+                    key={`cost-${p.sku}-${p.cost}`}
                     type="number"
                     defaultValue={p.cost ?? ''}
                     placeholder="—"
@@ -204,6 +207,7 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
                 </td>
                 <td className="py-2">
                   <input
+                    key={`price-${p.sku}-${p.price}`}
                     type="number"
                     defaultValue={p.price}
                     onBlur={(e) => saveField(p.sku, 'price', e.target.value)}

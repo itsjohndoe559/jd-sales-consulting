@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 // Returns { sku: onHandNumber } computed as sum(change) grouped by sku.
 export async function GET() {
   const sb = supabaseServer();

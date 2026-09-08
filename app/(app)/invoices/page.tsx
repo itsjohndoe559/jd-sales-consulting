@@ -4,6 +4,8 @@ import { money, dateTime } from '@/lib/format';
 import CreateInvoice from '@/components/CreateInvoice';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export default async function InvoicesPage() {
   const invoices = await getInvoices();

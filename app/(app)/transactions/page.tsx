@@ -4,6 +4,8 @@ import { channelFor } from '@/lib/format';
 import TransactionRow from '@/components/TransactionRow';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 const FILTERS = ['All', 'Cash', 'Digital', 'This Week'] as const;
 

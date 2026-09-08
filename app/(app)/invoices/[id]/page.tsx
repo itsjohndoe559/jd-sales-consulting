@@ -4,6 +4,8 @@ import { getInvoiceById } from '@/lib/data';
 import InvoiceDetail from '@/components/InvoiceDetail';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export default async function InvoicePage({
   params,

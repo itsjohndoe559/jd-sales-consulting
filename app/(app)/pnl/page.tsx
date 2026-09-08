@@ -10,6 +10,8 @@ import { money } from '@/lib/format';
 import PnlChart from '@/components/PnlChart';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 const PERIODS = ['weekly', 'monthly', 'ytd'] as const;
 

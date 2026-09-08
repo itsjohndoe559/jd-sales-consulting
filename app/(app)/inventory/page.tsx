@@ -3,6 +3,8 @@ import InventoryTable from '@/components/InventoryTable';
 import AddSkuForm from '@/components/AddSkuForm';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export default async function InventoryPage() {
   const [products, onHand] = await Promise.all([getProducts(), getOnHand()]);

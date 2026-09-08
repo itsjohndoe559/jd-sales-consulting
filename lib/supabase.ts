@@ -29,5 +29,13 @@ export function supabaseServer() {
 
   return createClient(url, key, {
     auth: { persistSession: false },
+    // Belt-and-suspenders: force every request this client makes to bypass
+    // Next.js/Vercel's fetch-level caching, regardless of route segment
+    // config. Without this, GET requests to Supabase's REST API can get
+    // cached and never see new data — the exact bug that broke this app.
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+        fetch(input, { ...init, cache: 'no-store' }),
+    },
   });
 }
