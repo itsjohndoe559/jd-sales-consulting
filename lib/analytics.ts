@@ -103,6 +103,22 @@ export function topProducts(transactions: Transaction[], limit = 8) {
     .slice(0, limit);
 }
 
+export function topProductsByUnits(transactions: Transaction[], limit = 8) {
+  const bySku = new Map<string, { name: string; units: number }>();
+  for (const t of transactions) {
+    if (t.voided) continue;
+    for (const item of t.items) {
+      const existing = bySku.get(item.sku) ?? { name: item.name, units: 0 };
+      existing.units += item.qty;
+      bySku.set(item.sku, existing);
+    }
+  }
+  return Array.from(bySku.entries())
+    .map(([sku, v]) => ({ sku, ...v }))
+    .sort((a, b) => b.units - a.units)
+    .slice(0, limit);
+}
+
 export type PnlBucket = { label: string; revenue: number; profit: number | null };
 
 function bucketStats(txns: Transaction[], costBySku: Map<string, number | null>) {

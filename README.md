@@ -47,6 +47,12 @@ Next.js + Supabase + Vercel. Single shared passcode, no per-user accounts.
   Settings was explicitly out of scope for this build).
 - No Settings page and no multi-user accounts, per spec — single shared
   passcode only.
+- "Ask AI" chat (top-right bubble): summarizes all-time sales/inventory
+  data server-side and sends that summary (not raw records) to Claude
+  Haiku alongside the question. No chat history persistence - refreshing
+  clears it, per spec. Requires `ANTHROPIC_API_KEY` in env vars; without
+  it, the button still appears but answers with a clear configuration
+  error instead of failing silently.
 
 ## Support
 
