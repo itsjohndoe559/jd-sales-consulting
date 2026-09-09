@@ -191,6 +191,141 @@ export function pnlYtd(
   return { label: `${year} YTD`, ...stats };
 }
 
+export function monthRangeFor(monthStr: string) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const start = new Date(y, m - 1, 1);
+  const end = new Date(y, m, 0, 23, 59, 59);
+  return { start, end };
+}
+
+export function currentMonthStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function last12Months(): { value: string; label: string }[] {
+  const out = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
+    out.push({ value, label });
+  }
+  return out;
+}
+
+export type ChartGranularity = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+function revenueBetween(transactions: Transaction[], start: Date, end: Date) {
+  return transactions
+    .filter((t) => !t.voided && inRange(t.created_at, start, end))
+    .reduce((s, t) => s + t.total, 0);
+}
+
+/** Revenue series for the Dashboard chart, bucketed per the chosen granularity. */
+export function revenueSeries(
+  transactions: Transaction[],
+  monthStr: string,
+  granularity: ChartGranularity
+): { label: string; total: number }[] {
+  const [y, m] = monthStr.split('-').map(Number);
+
+  if (granularity === 'daily') {
+    const { start, end } = monthRangeFor(monthStr);
+    return dailyRevenue(transactions, start, end).map((d) => ({
+      label: new Date(d.date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      total: d.total,
+    }));
+  }
+
+  if (granularity === 'weekly') {
+    const { start: monthStart, end: monthEnd } = monthRangeFor(monthStr);
+    const buckets: { label: string; total: number }[] = [];
+    let ws = new Date(monthStart);
+    let n = 1;
+    while (ws <= monthEnd) {
+      const we = new Date(ws);
+      we.setDate(we.getDate() + 6);
+      we.setHours(23, 59, 59, 999);
+      const capped = we > monthEnd ? monthEnd : we;
+      buckets.push({
+        label: `Week ${n}`,
+        total: revenueBetween(transactions, ws, capped),
+      });
+      ws = new Date(ws);
+      ws.setDate(ws.getDate() + 7);
+      n += 1;
+    }
+    return buckets;
+  }
+
+  if (granularity === 'monthly') {
+    const buckets: { label: string; total: number }[] = [];
+    for (let mo = 0; mo < 12; mo++) {
+      const s = new Date(y, mo, 1);
+      const e = new Date(y, mo + 1, 0, 23, 59, 59);
+      buckets.push({
+        label: s.toLocaleDateString('en-US', { month: 'short' }),
+        total: revenueBetween(transactions, s, e),
+      });
+    }
+    return buckets;
+  }
+
+  // yearly
+  const years = new Set(
+    transactions.map((t) => new Date(t.created_at).getFullYear())
+  );
+  years.add(y);
+  return Array.from(years)
+    .sort()
+    .map((year) => {
+      const s = new Date(year, 0, 1);
+      const e = new Date(year, 11, 31, 23, 59, 59);
+      return { label: String(year), total: revenueBetween(transactions, s, e) };
+    });
+}
+
+/** Top products ranked over the range implied by the chosen granularity. */
+export function topProductsRange(
+  transactions: Transaction[],
+  monthStr: string,
+  granularity: ChartGranularity,
+  limit = 5
+) {
+  const now = new Date();
+  let start: Date;
+  let end: Date;
+
+  if (granularity === 'daily') {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  } else if (granularity === 'weekly') {
+    end = now;
+    start = new Date(now);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+  } else if (granularity === 'monthly') {
+    ({ start, end } = monthRangeFor(monthStr));
+  } else {
+    const [y] = monthStr.split('-').map(Number);
+    start = new Date(y, 0, 1);
+    end = new Date(y, 11, 31, 23, 59, 59);
+  }
+
+  const filtered = transactions.filter(
+    (t) => !t.voided && inRange(t.created_at, start, end)
+  );
+  return topProducts(filtered, limit);
+}
+
 export function lowStock(
   onHand: Record<string, number>,
   products: Product[],

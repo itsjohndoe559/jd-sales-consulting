@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Receipt from './Receipt';
+import { downloadElementAsPdf } from '@/lib/pdf';
 import type { Invoice } from '@/lib/types';
 
 export default function InvoiceDetail({ invoice }: { invoice: Invoice }) {
@@ -23,13 +24,7 @@ export default function InvoiceDetail({ invoice }: { invoice: Invoice }) {
 
   async function downloadPdf() {
     if (!ref.current) return;
-    const html2canvas = (await import('html2canvas')).default;
-    const { jsPDF } = await import('jspdf');
-    const canvas = await html2canvas(ref.current, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height] });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save(`${invoice.invoice_number}.pdf`);
+    await downloadElementAsPdf(ref.current, `${invoice.invoice_number}.pdf`);
   }
 
   return (

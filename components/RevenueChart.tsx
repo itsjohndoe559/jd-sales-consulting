@@ -14,19 +14,11 @@ import { money } from '@/lib/format';
 export default function RevenueChart({
   data,
 }: {
-  data: { date: string; total: number }[];
+  data: { label: string; total: number }[];
 }) {
-  const formatted = data.map((d) => ({
-    ...d,
-    label: new Date(d.date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }),
-  }));
-
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={formatted}>
+      <AreaChart data={data}>
         <defs>
           <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#C8202F" stopOpacity={0.25} />
@@ -39,7 +31,7 @@ export default function RevenueChart({
           tick={{ fontSize: 11, fill: '#6B7480' }}
           axisLine={false}
           tickLine={false}
-          interval={Math.max(0, Math.floor(formatted.length / 6) - 1)}
+          interval={Math.max(0, Math.floor(data.length / 6) - 1)}
         />
         <YAxis
           tick={{ fontSize: 11, fill: '#6B7480' }}

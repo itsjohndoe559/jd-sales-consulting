@@ -1,44 +1,57 @@
 import Link from 'next/link';
 import { getProducts, getTransactions, getOnHand } from '@/lib/data';
-import { computeKpis, dailyRevenue, monthRange, topProducts, lowStock } from '@/lib/analytics';
+import {
+  computeKpis,
+  monthRangeFor,
+  currentMonthStr,
+  revenueSeries,
+  topProductsRange,
+  lowStock,
+  type ChartGranularity,
+} from '@/lib/analytics';
 import { money, shortDate } from '@/lib/format';
 import KpiTile from '@/components/KpiTile';
 import RevenueChart from '@/components/RevenueChart';
+import MonthSelect from '@/components/MonthSelect';
+import GranularityTabs from '@/components/GranularityTabs';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { month?: string; chart?: string; top?: string };
+}) {
+  const month = searchParams.month ?? currentMonthStr();
+  const chartGranularity = (searchParams.chart ?? 'daily') as ChartGranularity;
+  const topGranularity = (searchParams.top ?? 'monthly') as ChartGranularity;
+
   const [products, transactions, onHand] = await Promise.all([
     getProducts(),
     getTransactions(),
     getOnHand(),
   ]);
 
-  const { start, end } = monthRange();
+  const { start, end } = monthRangeFor(month);
   const monthTxns = transactions.filter(
     (t) => new Date(t.created_at) >= start && new Date(t.created_at) <= end
   );
 
   const kpis = computeKpis(monthTxns, products, onHand);
-  const chartData = dailyRevenue(monthTxns, start, end);
-  const top = topProducts(monthTxns, 5);
+  const chartData = revenueSeries(transactions, month, chartGranularity);
+  const top = topProductsRange(transactions, month, topGranularity, 5);
   const low = lowStock(onHand, products, 10);
   const recent = transactions.slice(0, 5);
 
-  const monthLabel = start.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
-
   return (
     <div>
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-6 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-slate">{monthLabel}</p>
         </div>
+        <MonthSelect value={month} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -86,16 +99,23 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="card p-4 lg:col-span-2">
-          <div className="text-sm font-bold mb-1">Daily Revenue</div>
-          <div className="text-xs text-slate mb-2">
-            Cash + digital sales, {monthLabel}
+          <div className="flex justify-between items-start gap-3 flex-wrap mb-2">
+            <div>
+              <div className="text-sm font-bold">Revenue</div>
+              <div className="text-xs text-slate">Cash + digital sales</div>
+            </div>
+            <GranularityTabs paramName="chart" value={chartGranularity} />
           </div>
           <RevenueChart data={chartData} />
         </div>
 
         <div className="card p-4">
-          <div className="text-sm font-bold mb-1">Top Products</div>
-          <div className="text-xs text-slate mb-3">By revenue this month</div>
+          <div className="flex justify-between items-start gap-2 flex-wrap mb-1">
+            <div className="text-sm font-bold">Top Products</div>
+          </div>
+          <div className="mb-3">
+            <GranularityTabs paramName="top" value={topGranularity} />
+          </div>
           <div className="flex flex-col gap-3">
             {top.length === 0 && (
               <div className="text-sm text-slate italic">No sales yet.</div>
