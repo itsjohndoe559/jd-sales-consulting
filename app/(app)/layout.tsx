@@ -1,6 +1,5 @@
 import AppShell from '@/components/AppShell';
 import AddSale from '@/components/AddSale';
-import ChatBot from '@/components/ChatBot';
 
 export default function AppLayout({
   children,
@@ -11,7 +10,6 @@ export default function AppLayout({
     <AppShell>
       {children}
       <AddSale />
-      <ChatBot />
     </AppShell>
   );
 }
