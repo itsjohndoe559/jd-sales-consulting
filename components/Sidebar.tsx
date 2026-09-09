@@ -9,6 +9,7 @@ const NAV = [
   { href: '/inventory', label: 'Inventory' },
   { href: '/pnl', label: 'P&L' },
   { href: '/invoices', label: 'Invoices' },
+  { href: '/reports', label: 'Reports' },
 ];
 
 export default function Sidebar({

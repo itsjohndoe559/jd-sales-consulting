@@ -44,10 +44,23 @@ create table if not exists invoices (
   created_at timestamptz not null default now()
 );
 
+-- Daily Reports: one snapshot per calendar day (business-local), storing
+-- the computed metrics as JSON so past reports re-download identically
+-- even if later transactions/costs would change the live numbers.
+create table if not exists daily_reports (
+  id uuid primary key default gen_random_uuid(),
+  report_date date not null,
+  generated_at timestamptz not null default now(),
+  json_data jsonb,
+  created_at timestamptz not null default now(),
+  unique(report_date)
+);
+
 alter table products enable row level security;
 alter table inventory_adjustments enable row level security;
 alter table transactions enable row level security;
 alter table invoices enable row level security;
+alter table daily_reports enable row level security;
 -- No public policies: all reads/writes go through Next.js API routes using the
 -- service_role key server-side only. The anon key (never used here) would have
 -- zero access with RLS on and no policies defined.

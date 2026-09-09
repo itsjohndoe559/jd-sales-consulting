@@ -39,3 +39,37 @@ export type Invoice = {
   paid_at: string | null;
   created_at: string;
 };
+
+export type InventoryChange = {
+  sku: string;
+  name: string;
+  in: number;
+  out: number;
+  net: number;
+};
+
+export type LowStockRow = {
+  sku: string;
+  name: string;
+  onHand: number;
+};
+
+export type DailyReportData = {
+  reportDate: string; // 'YYYY-MM-DD'
+  dailyRevenue: number;
+  unitsSold: number;
+  cogs: number | null;
+  missingCostSkus: string[];
+  dailyProfit: number | null;
+  transactionCount: number;
+  inventoryChanges: InventoryChange[];
+  lowStock: LowStockRow[];
+};
+
+export type DailyReport = {
+  id: string;
+  report_date: string;
+  generated_at: string;
+  json_data: DailyReportData;
+  created_at: string;
+};
