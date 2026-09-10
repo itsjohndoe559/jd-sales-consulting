@@ -1,7 +1,15 @@
 import { money, longDate } from './format';
 import type { DailyReportData } from './types';
 
-const FROM_ADDRESS = 'JD Sales Reports <reports@jdsalesconsulting.app>';
+// Configurable via env var so switching from the Resend sandbox address to
+// a verified jdconsultingllc.org address later doesn't need a code change -
+// just set RESEND_FROM_ADDRESS in Vercel and redeploy. Defaults to Resend's
+// sandbox address, which works immediately with no domain verification;
+// sending from an unverified custom domain fails silently rather than
+// erroring loudly, so defaulting to something guaranteed to work avoids
+// that trap while jdconsultingllc.org verification is still pending.
+const FROM_ADDRESS =
+  process.env.RESEND_FROM_ADDRESS || 'JD Sales Reports <onboarding@resend.dev>';
 
 export function buildDailyReportEmail(data: DailyReportData): string {
   const incomplete = data.cogs === null;

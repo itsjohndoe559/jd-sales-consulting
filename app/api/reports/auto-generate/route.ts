@@ -43,9 +43,12 @@ async function handle(req: NextRequest) {
   }
 
   // Email failures shouldn't fail the whole request - the report is
-  // generated and saved either way.
+  // generated and saved either way. The error is still returned in the
+  // response (not just logged) so this is debuggable from the cron
+  // dashboard's response body alone, without needing Vercel's logs.
   let emailsSent = false;
   let recipientCount = 0;
+  let emailError: string | null = null;
   try {
     const recipients = reportEmailRecipients();
     const html = buildDailyReportEmail(report.json_data);
@@ -60,6 +63,7 @@ async function handle(req: NextRequest) {
       .update({ sent_at: new Date().toISOString(), recipients })
       .eq('id', report.id);
   } catch (err) {
+    emailError = err instanceof Error ? err.message : 'Unknown email error.';
     console.error('auto-generate: email send failed', err);
   }
 
@@ -69,6 +73,7 @@ async function handle(req: NextRequest) {
     reportDate,
     emailsSent,
     recipientCount,
+    emailError,
   });
 }
 
