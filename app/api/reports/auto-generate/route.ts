@@ -18,7 +18,7 @@ function isAuthorized(req: NextRequest) {
   return fromQuery === secret || fromHeader === secret;
 }
 
-export async function POST(req: NextRequest) {
+async function handle(req: NextRequest) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
@@ -70,4 +70,15 @@ export async function POST(req: NextRequest) {
     emailsSent,
     recipientCount,
   });
+}
+
+// Most free cron services (cron-job.org included) fire a plain GET by
+// default - accept both so the job works regardless of which method the
+// cron dashboard ends up configured with.
+export async function GET(req: NextRequest) {
+  return handle(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handle(req);
 }
