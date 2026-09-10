@@ -49,12 +49,17 @@ export function dateTime(iso: string) {
 
 /** Today's date as 'YYYY-MM-DD' in the business's local timezone. */
 export function todayInBusinessTz() {
+  return businessDateStr(new Date().toISOString());
+}
+
+/** The Pacific-local calendar date, as 'YYYY-MM-DD', for any ISO timestamp. */
+export function businessDateStr(iso: string) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: BUSINESS_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).formatToParts(new Date());
+  }).formatToParts(new Date(iso));
   const get = (t: string) => parts.find((p) => p.type === t)!.value;
   return `${get('year')}-${get('month')}-${get('day')}`;
 }

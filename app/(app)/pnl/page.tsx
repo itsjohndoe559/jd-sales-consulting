@@ -1,11 +1,6 @@
 import Link from 'next/link';
 import { getProducts, getTransactions } from '@/lib/data';
-import {
-  monthRange,
-  pnlByWeek,
-  pnlByMonth,
-  pnlYtd,
-} from '@/lib/analytics';
+import { pnlByWeek, pnlByMonth, pnlYtd, currentMonthStr } from '@/lib/analytics';
 import { money } from '@/lib/format';
 import PnlChart from '@/components/PnlChart';
 
@@ -26,15 +21,20 @@ export default async function PnlPage({
     getTransactions(),
   ]);
 
-  const now = new Date();
+  // Derived in the business's local timezone, not the server's (UTC) clock -
+  // otherwise late-evening Pacific sales near a month/year boundary could
+  // land in the wrong bucket.
+  const monthStr = currentMonthStr();
+  const [currentYear] = monthStr.split('-').map(Number);
+  const currentMonthIndex = Number(monthStr.split('-')[1]) - 1;
+
   let buckets;
   if (period === 'weekly') {
-    const { start, end } = monthRange(now);
-    buckets = pnlByWeek(transactions, products, start, end);
+    buckets = pnlByWeek(transactions, products, monthStr);
   } else if (period === 'monthly') {
-    buckets = pnlByMonth(transactions, products, now.getFullYear(), now.getMonth());
+    buckets = pnlByMonth(transactions, products, currentYear, currentMonthIndex);
   } else {
-    buckets = [pnlYtd(transactions, products, now.getFullYear())];
+    buckets = [pnlYtd(transactions, products, currentYear)];
   }
 
   const totalRevenue = buckets.reduce((s, b) => s + b.revenue, 0);

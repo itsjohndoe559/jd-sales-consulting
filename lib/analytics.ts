@@ -1,9 +1,84 @@
 import type { Product, Transaction } from './types';
+import { businessDayRange, businessDateStr } from './format';
+
+const MONTH_ABBR = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+function pad(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function parseDateStr(s: string) {
+  const [y, m, d] = s.split('-').map(Number);
+  return { y, m, d };
+}
+
+/** Pure calendar-math day count - no timezone involved, just "how many days in this month". */
+function daysInMonth(y: number, m: number) {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+function firstOfMonthStr(y: number, m: number) {
+  return `${y}-${pad(m)}-01`;
+}
+
+function lastOfMonthStr(y: number, m: number) {
+  return `${y}-${pad(m)}-${pad(daysInMonth(y, m))}`;
+}
+
+/** Adds n days to a 'YYYY-MM-DD' string as pure calendar math (no timezone). */
+function addDaysStr(dateStr: string, n: number) {
+  const { y, m, d } = parseDateStr(dateStr);
+  const t = Date.UTC(y, m - 1, d) + n * 86400000;
+  const dt = new Date(t);
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+}
+
+/**
+ * Every function below resolves calendar-day/month/year boundaries via
+ * businessDayRange (Pacific-local midnight-to-midnight), never via raw
+ * `new Date(y, m, d)` construction. That constructor uses the server's
+ * OS timezone, which on Vercel is UTC - so "midnight" there is actually
+ * 4-8pm Pacific the previous day, silently shifting evening sales into
+ * the wrong day/week/month/year bucket everywhere in this file.
+ */
+
+export function monthRangeFor(monthStr: string) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const { start } = businessDayRange(firstOfMonthStr(y, m));
+  const { end } = businessDayRange(lastOfMonthStr(y, m));
+  return { start, end };
+}
 
 export function monthRange(d = new Date()) {
-  const start = new Date(d.getFullYear(), d.getMonth(), 1);
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-  return { start, end };
+  return monthRangeFor(businessDateStr(d.toISOString()).slice(0, 7));
+}
+
+export function currentMonthStr() {
+  return businessDateStr(new Date().toISOString()).slice(0, 7);
+}
+
+export function last12Months(): { value: string; label: string }[] {
+  const out = [];
+  const { y: ny, m: nm } = parseDateStr(businessDateStr(new Date().toISOString()));
+  for (let i = 0; i < 12; i++) {
+    let year = ny;
+    let month = nm - i;
+    while (month <= 0) {
+      month += 12;
+      year -= 1;
+    }
+    const value = `${year}-${pad(month)}`;
+    const label = new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+    out.push({ value, label });
+  }
+  return out;
 }
 
 export function inRange(iso: string, start: Date, end: Date) {
@@ -62,26 +137,19 @@ export function computeKpis(
   };
 }
 
-export function dailyRevenue(
-  transactions: Transaction[],
-  start: Date,
-  end: Date
-) {
+/** Revenue per calendar day (Pacific) for every day in the given month. */
+export function dailyRevenue(transactions: Transaction[], monthStr: string) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const n = daysInMonth(y, m);
   const days: { date: string; total: number }[] = [];
-  const cursor = new Date(start);
-  const byDay = new Map<string, number>();
 
-  for (const t of transactions) {
-    if (t.voided) continue;
-    if (!inRange(t.created_at, start, end)) continue;
-    const key = new Date(t.created_at).toISOString().slice(0, 10);
-    byDay.set(key, (byDay.get(key) ?? 0) + t.total);
-  }
-
-  while (cursor <= end) {
-    const key = cursor.toISOString().slice(0, 10);
-    days.push({ date: key, total: byDay.get(key) ?? 0 });
-    cursor.setDate(cursor.getDate() + 1);
+  for (let day = 1; day <= n; day++) {
+    const dateStr = `${y}-${pad(m)}-${pad(day)}`;
+    const { start, end } = businessDayRange(dateStr);
+    const total = transactions
+      .filter((t) => !t.voided && inRange(t.created_at, start, end))
+      .reduce((s, t) => s + t.total, 0);
+    days.push({ date: dateStr, total });
   }
 
   return days;
@@ -143,28 +211,26 @@ function bucketStats(txns: Transaction[], costBySku: Map<string, number | null>)
 export function pnlByWeek(
   transactions: Transaction[],
   products: Product[],
-  monthStart: Date,
-  monthEnd: Date
+  monthStr: string
 ): PnlBucket[] {
   const costBySku = new Map(products.map((p) => [p.sku, p.cost]));
+  const [y, m] = monthStr.split('-').map(Number);
+  const lastDay = lastOfMonthStr(y, m);
   const buckets: PnlBucket[] = [];
-  let weekStart = new Date(monthStart);
+
+  let cursor = firstOfMonthStr(y, m);
   let weekNum = 1;
+  while (cursor <= lastDay) {
+    let weekEnd = addDaysStr(cursor, 6);
+    if (weekEnd > lastDay) weekEnd = lastDay;
 
-  while (weekStart <= monthEnd) {
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
-    const cappedEnd = weekEnd > monthEnd ? monthEnd : weekEnd;
-
-    const txns = transactions.filter((t) =>
-      inRange(t.created_at, weekStart, cappedEnd)
-    );
+    const { start } = businessDayRange(cursor);
+    const { end } = businessDayRange(weekEnd);
+    const txns = transactions.filter((t) => inRange(t.created_at, start, end));
     const stats = bucketStats(txns, costBySku);
     buckets.push({ label: `Week ${weekNum}`, ...stats });
 
-    weekStart = new Date(weekStart);
-    weekStart.setDate(weekStart.getDate() + 7);
+    cursor = addDaysStr(cursor, 7);
     weekNum += 1;
   }
 
@@ -180,15 +246,13 @@ export function pnlByMonth(
   const costBySku = new Map(products.map((p) => [p.sku, p.cost]));
   const buckets: PnlBucket[] = [];
 
-  for (let m = 0; m <= throughMonth; m++) {
-    const start = new Date(year, m, 1);
-    const end = new Date(year, m + 1, 0, 23, 59, 59);
+  for (let mo = 0; mo <= throughMonth; mo++) {
+    const monthNum = mo + 1;
+    const { start } = businessDayRange(firstOfMonthStr(year, monthNum));
+    const { end } = businessDayRange(lastOfMonthStr(year, monthNum));
     const txns = transactions.filter((t) => inRange(t.created_at, start, end));
     const stats = bucketStats(txns, costBySku);
-    buckets.push({
-      label: start.toLocaleDateString('en-US', { month: 'short' }),
-      ...stats,
-    });
+    buckets.push({ label: MONTH_ABBR[mo], ...stats });
   }
 
   return buckets;
@@ -200,38 +264,11 @@ export function pnlYtd(
   year: number
 ): PnlBucket {
   const costBySku = new Map(products.map((p) => [p.sku, p.cost]));
-  const start = new Date(year, 0, 1);
-  const end = new Date();
+  const { start } = businessDayRange(`${year}-01-01`);
+  const end = new Date(); // "up to right now" - timezone-agnostic as an instant
   const txns = transactions.filter((t) => inRange(t.created_at, start, end));
   const stats = bucketStats(txns, costBySku);
   return { label: `${year} YTD`, ...stats };
-}
-
-export function monthRangeFor(monthStr: string) {
-  const [y, m] = monthStr.split('-').map(Number);
-  const start = new Date(y, m - 1, 1);
-  const end = new Date(y, m, 0, 23, 59, 59);
-  return { start, end };
-}
-
-export function currentMonthStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-export function last12Months(): { value: string; label: string }[] {
-  const out = [];
-  const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const label = d.toLocaleDateString('en-US', {
-      month: 'long',
-      year: 'numeric',
-    });
-    out.push({ value, label });
-  }
-  return out;
 }
 
 export type ChartGranularity = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -251,32 +288,24 @@ export function revenueSeries(
   const [y, m] = monthStr.split('-').map(Number);
 
   if (granularity === 'daily') {
-    const { start, end } = monthRangeFor(monthStr);
-    return dailyRevenue(transactions, start, end).map((d) => ({
-      label: new Date(d.date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      }),
-      total: d.total,
-    }));
+    return dailyRevenue(transactions, monthStr).map((d) => {
+      const { m: mm, d: dd } = parseDateStr(d.date);
+      return { label: `${MONTH_ABBR[mm - 1]} ${dd}`, total: d.total };
+    });
   }
 
   if (granularity === 'weekly') {
-    const { start: monthStart, end: monthEnd } = monthRangeFor(monthStr);
+    const lastDay = lastOfMonthStr(y, m);
     const buckets: { label: string; total: number }[] = [];
-    let ws = new Date(monthStart);
+    let cursor = firstOfMonthStr(y, m);
     let n = 1;
-    while (ws <= monthEnd) {
-      const we = new Date(ws);
-      we.setDate(we.getDate() + 6);
-      we.setHours(23, 59, 59, 999);
-      const capped = we > monthEnd ? monthEnd : we;
-      buckets.push({
-        label: `Week ${n}`,
-        total: revenueBetween(transactions, ws, capped),
-      });
-      ws = new Date(ws);
-      ws.setDate(ws.getDate() + 7);
+    while (cursor <= lastDay) {
+      let weekEnd = addDaysStr(cursor, 6);
+      if (weekEnd > lastDay) weekEnd = lastDay;
+      const { start } = businessDayRange(cursor);
+      const { end } = businessDayRange(weekEnd);
+      buckets.push({ label: `Week ${n}`, total: revenueBetween(transactions, start, end) });
+      cursor = addDaysStr(cursor, 7);
       n += 1;
     }
     return buckets;
@@ -284,28 +313,26 @@ export function revenueSeries(
 
   if (granularity === 'monthly') {
     const buckets: { label: string; total: number }[] = [];
-    for (let mo = 0; mo < 12; mo++) {
-      const s = new Date(y, mo, 1);
-      const e = new Date(y, mo + 1, 0, 23, 59, 59);
-      buckets.push({
-        label: s.toLocaleDateString('en-US', { month: 'short' }),
-        total: revenueBetween(transactions, s, e),
-      });
+    for (let mo = 1; mo <= 12; mo++) {
+      const { start } = businessDayRange(firstOfMonthStr(y, mo));
+      const { end } = businessDayRange(lastOfMonthStr(y, mo));
+      buckets.push({ label: MONTH_ABBR[mo - 1], total: revenueBetween(transactions, start, end) });
     }
     return buckets;
   }
 
   // yearly
-  const years = new Set(
-    transactions.map((t) => new Date(t.created_at).getFullYear())
-  );
+  const years = new Set<number>();
+  for (const t of transactions) {
+    years.add(Number(businessDateStr(t.created_at).slice(0, 4)));
+  }
   years.add(y);
   return Array.from(years)
     .sort()
     .map((year) => {
-      const s = new Date(year, 0, 1);
-      const e = new Date(year, 11, 31, 23, 59, 59);
-      return { label: String(year), total: revenueBetween(transactions, s, e) };
+      const { start } = businessDayRange(`${year}-01-01`);
+      const { end } = businessDayRange(`${year}-12-31`);
+      return { label: String(year), total: revenueBetween(transactions, start, end) };
     });
 }
 
@@ -316,24 +343,21 @@ export function topProductsRange(
   granularity: ChartGranularity,
   limit = 5
 ) {
-  const now = new Date();
   let start: Date;
   let end: Date;
+  const todayStr = businessDateStr(new Date().toISOString());
 
   if (granularity === 'daily') {
-    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    ({ start, end } = businessDayRange(todayStr));
   } else if (granularity === 'weekly') {
-    end = now;
-    start = new Date(now);
-    start.setDate(start.getDate() - 6);
-    start.setHours(0, 0, 0, 0);
+    ({ start } = businessDayRange(addDaysStr(todayStr, -6)));
+    end = new Date(); // up to right now
   } else if (granularity === 'monthly') {
     ({ start, end } = monthRangeFor(monthStr));
   } else {
     const [y] = monthStr.split('-').map(Number);
-    start = new Date(y, 0, 1);
-    end = new Date(y, 11, 31, 23, 59, 59);
+    ({ start } = businessDayRange(`${y}-01-01`));
+    ({ end } = businessDayRange(`${y}-12-31`));
   }
 
   const filtered = transactions.filter(
