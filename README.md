@@ -53,6 +53,21 @@ Next.js + Supabase + Vercel. Single shared passcode, no per-user accounts.
   clears it, per spec. Requires `ANTHROPIC_API_KEY` in env vars; without
   it, the button still appears but answers with a clear configuration
   error instead of failing silently.
+- Search/filter on Transactions, Invoices, Inventory: filters client-side
+  against the already-fetched data (no refetch per keystroke) and persist
+  in the URL via `history.replaceState`, so a bookmarked/reloaded filtered
+  view is restored - without triggering a server re-render on every
+  change the way updating the URL through Next's router would.
+- Daily report emails: `/api/reports/auto-generate` is exempted from the
+  login wall (see middleware.ts) since an external cron service has to
+  reach it with no session - it authenticates instead via
+  `REPORTS_CRON_SECRET`, passed as `?secret=...` or an `Authorization:
+  Bearer` header. Fails closed (401) if that env var isn't set. Email
+  failures never fail the report generation itself - the report still
+  saves even if Resend is down or unconfigured.
+- Margin Analysis (on the P&L page) uses its own date range rather than
+  matching the chart above it exactly, per spec: Weekly = last 7 days,
+  Monthly = the current calendar month, YTD = all-time.
 
 ## Support
 

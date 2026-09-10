@@ -52,9 +52,13 @@ create table if not exists daily_reports (
   report_date date not null,
   generated_at timestamptz not null default now(),
   json_data jsonb,
+  sent_at timestamptz,
+  recipients text[],
   created_at timestamptz not null default now(),
   unique(report_date)
 );
+
+create index if not exists idx_daily_reports_sent_at on daily_reports(sent_at);
 
 alter table products enable row level security;
 alter table inventory_adjustments enable row level security;

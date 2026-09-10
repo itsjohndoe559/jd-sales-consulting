@@ -5,9 +5,13 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Always allow the login page itself and its API route, plus Next.js internals.
+  // /api/reports/auto-generate is also exempted - it's called by an external
+  // cron service with no session, and authenticates itself via a shared
+  // secret instead (see that route's isAuthorized check).
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/login') ||
+    pathname.startsWith('/api/reports/auto-generate') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon')
   ) {

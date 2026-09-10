@@ -1,8 +1,16 @@
 import Link from 'next/link';
 import { getProducts, getTransactions } from '@/lib/data';
-import { pnlByWeek, pnlByMonth, pnlYtd, currentMonthStr } from '@/lib/analytics';
-import { money } from '@/lib/format';
+import {
+  pnlByWeek,
+  pnlByMonth,
+  pnlYtd,
+  currentMonthStr,
+  monthRangeFor,
+  inRange,
+} from '@/lib/analytics';
+import { money, businessDayRange, todayInBusinessTz, addDaysToDateStr } from '@/lib/format';
 import PnlChart from '@/components/PnlChart';
+import MarginAnalysis from '@/components/MarginAnalysis';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,6 +50,25 @@ export default async function PnlPage({
   const totalProfit = incomplete
     ? null
     : buckets.reduce((s, b) => s + (b.profit ?? 0), 0);
+
+  // The Margin Analysis section below has its own, simpler range semantics
+  // per the feature spec: Weekly = last 7 days, Monthly = current month,
+  // YTD = all-time - independent of how the chart above buckets its weeks.
+  const todayStr = todayInBusinessTz();
+  let analysisStart: Date;
+  let analysisEnd: Date;
+  if (period === 'weekly') {
+    analysisStart = businessDayRange(addDaysToDateStr(todayStr, -6)).start;
+    analysisEnd = businessDayRange(todayStr).end;
+  } else if (period === 'monthly') {
+    ({ start: analysisStart, end: analysisEnd } = monthRangeFor(monthStr));
+  } else {
+    analysisStart = businessDayRange(`${currentYear}-01-01`).start;
+    analysisEnd = new Date();
+  }
+  const analysisTxns = transactions.filter(
+    (t) => !t.voided && inRange(t.created_at, analysisStart, analysisEnd)
+  );
 
   return (
     <div>
@@ -96,7 +123,7 @@ export default async function PnlPage({
         </div>
       )}
 
-      <div className="card p-4">
+      <div className="card p-4 mb-6">
         <div className="text-sm font-bold mb-3">Revenue vs. Profit</div>
         <PnlChart
           data={buckets.map((b) => ({
@@ -106,6 +133,8 @@ export default async function PnlPage({
           }))}
         />
       </div>
+
+      <MarginAnalysis transactions={analysisTxns} products={products} />
     </div>
   );
 }

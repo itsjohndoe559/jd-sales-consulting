@@ -1,5 +1,5 @@
 import { getProducts, getOnHand } from '@/lib/data';
-import InventoryTable from '@/components/InventoryTable';
+import InventorySearchFilter from '@/components/InventorySearchFilter';
 import AddSkuForm from '@/components/AddSkuForm';
 import KpiTile from '@/components/KpiTile';
 import { money } from '@/lib/format';
@@ -49,7 +49,7 @@ export default async function InventoryPage() {
         />
       </div>
 
-      <InventoryTable rows={rows} />
+      <InventorySearchFilter rows={rows} />
     </div>
   );
 }

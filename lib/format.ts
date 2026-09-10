@@ -112,6 +112,24 @@ export function businessDayRange(dateStr: string) {
   };
 }
 
+/** Adds n days to a 'YYYY-MM-DD' calendar-date string (pure calendar math). */
+export function addDaysToDateStr(dateStr: string, n: number) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const t = Date.UTC(y, m - 1, d) + n * 86400000;
+  const dt = new Date(t);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(
+    dt.getUTCDate()
+  ).padStart(2, '0')}`;
+}
+
+/** Full weekday name (Monday, Tuesday, ...) in the business's local timezone. */
+export function businessWeekday(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    weekday: 'long',
+    timeZone: BUSINESS_TIMEZONE,
+  });
+}
+
 /** Channel bucket used for the Cash/Digital filter chips. */
 export function channelFor(method: string): 'Cash' | 'Digital' {
   return method === 'Cash' ? 'Cash' : 'Digital';
