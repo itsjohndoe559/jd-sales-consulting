@@ -1,5 +1,5 @@
 import { supabaseServer } from './supabase';
-import type { Product, Transaction, Invoice } from './types';
+import type { Product, Transaction, Invoice, BusinessFile } from './types';
 
 export async function getProducts(): Promise<Product[]> {
   const sb = supabaseServer();
@@ -54,4 +54,14 @@ export async function getInvoiceById(id: string): Promise<Invoice | null> {
     .single();
   if (error) return null;
   return data as Invoice;
+}
+
+export async function getFiles(): Promise<BusinessFile[]> {
+  const sb = supabaseServer();
+  const { data, error } = await sb
+    .from('files')
+    .select('*')
+    .order('uploaded_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as BusinessFile[];
 }

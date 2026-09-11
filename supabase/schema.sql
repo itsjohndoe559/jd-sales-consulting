@@ -60,6 +60,30 @@ create table if not exists daily_reports (
 
 create index if not exists idx_daily_reports_sent_at on daily_reports(sent_at);
 
+-- Files: metadata for business documents (paperwork, invoices, receipts,
+-- bank slips, etc). The actual bytes live in Supabase Storage, in the
+-- 'business-files' bucket created below - this table just indexes them.
+create table if not exists files (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  category text not null, -- 'Paperwork' | 'Invoice' | 'Receipt' | 'Bank Info' | 'Other'
+  storage_path text not null,
+  mime_type text,
+  size_bytes bigint,
+  uploaded_at timestamptz not null default now()
+);
+
+alter table files enable row level security;
+-- No public policies here either - same as every other table, all access
+-- goes through the Next.js API routes using the service_role key, which
+-- bypasses RLS by design (for Storage too).
+
+-- Private bucket for the actual file bytes. Never made public - every file
+-- is served through a short-lived signed URL generated server-side.
+insert into storage.buckets (id, name, public)
+values ('business-files', 'business-files', false)
+on conflict (id) do nothing;
+
 alter table products enable row level security;
 alter table inventory_adjustments enable row level security;
 alter table transactions enable row level security;

@@ -73,3 +73,15 @@ export type DailyReport = {
   json_data: DailyReportData;
   created_at: string;
 };
+
+export type FileCategory = 'Paperwork' | 'Invoice' | 'Receipt' | 'Bank Info' | 'Other';
+
+export type BusinessFile = {
+  id: string;
+  name: string;
+  category: FileCategory;
+  storage_path: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  uploaded_at: string;
+};

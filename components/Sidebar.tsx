@@ -10,6 +10,7 @@ const NAV = [
   { href: '/pnl', label: 'P&L' },
   { href: '/invoices', label: 'Invoices' },
   { href: '/reports', label: 'Reports' },
+  { href: '/files', label: 'Files' },
   { href: '/chat', label: 'JD Sales Bot' },
 ];
 
