@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateAndStoreReport, ReportError, EARLIEST_REPORT_DATE } from '@/lib/reportMetrics';
-import { buildDailyReportEmail, sendEmail, reportEmailRecipients } from '@/lib/emailService';
+import { buildDailyReportEmail, buildDailyReportEmailText, sendEmail, reportEmailRecipients } from '@/lib/emailService';
 import { longDate, todayInBusinessTz, addDaysToDateStr } from '@/lib/format';
 import { supabaseServer } from '@/lib/supabase';
 
@@ -53,7 +53,7 @@ async function handle(req: NextRequest) {
     const recipients = reportEmailRecipients();
     const html = buildDailyReportEmail(report.json_data);
     const subject = `JD Sales Daily Report - ${longDate(reportDate)}`;
-    const result = await sendEmail(recipients, subject, html);
+    const result = await sendEmail(recipients, subject, html, buildDailyReportEmailText(report.json_data));
     recipientCount = result.emailsSent;
     emailsSent = true;
 

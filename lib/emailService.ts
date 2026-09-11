@@ -121,8 +121,39 @@ export function buildDailyReportEmail(data: DailyReportData): string {
 </html>`.trim();
 }
 
+/** Plain-text fallback for the report email - some clients (and Gmail's
+ * collapsed-thread preview) show this instead of the HTML body, so without
+ * it certain views can render as blank even though the HTML part is fine. */
+export function buildDailyReportEmailText(data: DailyReportData): string {
+  const lines = [
+    `JD Sales Daily Report - ${longDate(data.reportDate)}`,
+    '',
+    `Revenue: ${money(data.dailyRevenue)}`,
+    `Profit: ${data.dailyProfit === null ? 'Incomplete (some SKUs missing cost)' : money(data.dailyProfit)}`,
+    `COGS: ${data.cogs === null ? 'n/a' : money(data.cogs)}`,
+    `Transactions: ${data.transactionCount}`,
+  ];
+
+  if (data.inventoryChanges.length > 0) {
+    lines.push('', 'Inventory Changes:');
+    for (const c of data.inventoryChanges) {
+      lines.push(`  ${c.name} (${c.sku}): in ${c.in}, out ${c.out}, net ${c.net}`);
+    }
+  }
+
+  if (data.lowStock.length > 0) {
+    lines.push('', 'Low Stock Alerts:');
+    for (const p of data.lowStock) {
+      lines.push(`  ${p.name} (${p.sku}): ${p.onHand} left`);
+    }
+  }
+
+  lines.push('', 'View full dashboard: https://jd-sales-consulting.vercel.app/reports');
+  return lines.join('\n');
+}
+
 /** Thin wrapper over Resend's REST API - no SDK dependency needed for one call. */
-export async function sendEmail(to: string[], subject: string, html: string) {
+export async function sendEmail(to: string[], subject: string, html: string, text?: string) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured.');
@@ -137,7 +168,7 @@ export async function sendEmail(to: string[], subject: string, html: string) {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: FROM_ADDRESS, to, subject, html }),
+    body: JSON.stringify({ from: FROM_ADDRESS, to, subject, html, ...(text ? { text } : {}) }),
   });
 
   if (!res.ok) {

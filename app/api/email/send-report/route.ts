@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
-import { buildDailyReportEmail, sendEmail, reportEmailRecipients } from '@/lib/emailService';
+import { buildDailyReportEmail, buildDailyReportEmailText, sendEmail, reportEmailRecipients } from '@/lib/emailService';
 import { longDate } from '@/lib/format';
 import type { DailyReport } from '@/lib/types';
 
@@ -36,7 +36,12 @@ export async function POST(req: NextRequest) {
   const subject = `JD Sales Daily Report - ${longDate((report as DailyReport).report_date)}`;
 
   try {
-    const { emailsSent } = await sendEmail(recipients, subject, html);
+    const { emailsSent } = await sendEmail(
+      recipients,
+      subject,
+      html,
+      buildDailyReportEmailText((report as DailyReport).json_data)
+    );
 
     await sb
       .from('daily_reports')
