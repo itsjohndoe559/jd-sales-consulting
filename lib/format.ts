@@ -75,11 +75,15 @@ export function businessDayRange(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number);
 
   function localToUtc(hour: number, minute: number, second: number) {
-    // Standard converge-in-two-passes trick: guess a UTC instant, check
-    // what that instant looks like when rendered in the target timezone,
-    // and correct by the difference. Two passes is always enough since
-    // timezone offsets only take a handful of discrete values.
-    let guess = Date.UTC(y, m - 1, d, hour, minute, second);
+    // Converge on the UTC instant whose Pacific-local rendering matches the
+    // requested wall-clock time. Each pass re-derives the correction from
+    // the FIXED target (targetAsUtc), not from the previous guess - doing
+    // it against the previous guess (the earlier, buggy version of this
+    // function) double-applies the correction on the 2nd pass and overshoots
+    // by a full UTC offset, which silently shifted every day/week/month
+    // boundary in the app 7-8 hours later than intended.
+    const targetAsUtc = Date.UTC(y, m - 1, d, hour, minute, second);
+    let guess = targetAsUtc;
     for (let i = 0; i < 2; i++) {
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: BUSINESS_TIMEZONE,
@@ -101,7 +105,8 @@ export function businessDayRange(dateStr: string) {
         get('minute'),
         get('second')
       );
-      guess -= renderedAsUtc - guess;
+      const offset = renderedAsUtc - guess;
+      guess = targetAsUtc - offset;
     }
     return new Date(guess);
   }
