@@ -9,11 +9,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="md:flex min-h-screen">
       {/* Mobile top bar */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-line bg-white sticky top-0 z-30">
+      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-line bg-ink sticky top-0 z-30">
         <button
           onClick={() => setOpen(true)}
           aria-label="Open menu"
-          className="text-2xl leading-none px-1"
+          className="text-2xl leading-none px-1 text-white"
         >
           ☰
         </button>

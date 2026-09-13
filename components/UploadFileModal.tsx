@@ -115,7 +115,7 @@ export default function UploadFileModal() {
                   key={c}
                   onClick={() => setCategory(c)}
                   className={`px-3 py-1.5 rounded-full text-sm ${
-                    category === c ? 'bg-ink text-white' : 'bg-line/50 text-ink'
+                    category === c ? 'bg-jdred text-white' : 'bg-line/50 text-slate'
                   }`}
                 >
                   {c}

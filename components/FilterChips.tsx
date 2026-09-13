@@ -18,7 +18,7 @@ export default function FilterChips({
             key={o}
             onClick={() => onToggle(o)}
             className={`px-3 py-1.5 rounded-full text-sm ${
-              active ? 'bg-ink text-white' : 'bg-line/50 text-ink hover:bg-line'
+              active ? 'bg-jdred text-white' : 'bg-line/50 text-slate hover:bg-line'
             }`}
           >
             {o}

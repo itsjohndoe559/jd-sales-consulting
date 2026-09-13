@@ -4,16 +4,48 @@
 
 html,
 body {
-  background: #fbfbfa;
-  color: #14171a;
+  background: #0E1013;
+  color: #EDEEF0;
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #e6e8ea;
+  background: #16181C;
+  border: 1px solid #2A2D33;
   border-radius: 10px;
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Printable documents (invoice/receipt PDFs, daily reports) stay light
+   regardless of the app's dark theme - these get printed/emailed as
+   real paper-style documents, not viewed as app UI. Sets text color
+   explicitly since it can no longer rely on inheriting body's (now
+   light) default. */
+.doc-card {
+  background: #ffffff;
+  border: 1px solid #E6E8EA;
+  border-radius: 10px;
+  color: #14171A;
+}
+
+/* text-slate/border-line inside a doc-card need their original light-mode
+   values back, since those tokens were repurposed for the dark app theme
+   but these documents stay light - overriding here means Receipt.tsx and
+   ReportView.tsx don't need a single line of JSX changed. */
+.doc-card .text-slate {
+  color: #6B7480;
+}
+.doc-card .border-line {
+  border-color: #E6E8EA;
+}
+
+/* Native form controls (date/number inputs, selects) don't inherit the
+   dark color scheme automatically - this tells the browser to render
+   their built-in chrome (calendar icon, spinner arrows, popup lists)
+   in dark style instead of assuming a light page. */
+input,
+select {
+  color-scheme: dark;
 }

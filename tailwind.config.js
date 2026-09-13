@@ -8,11 +8,11 @@ module.exports = {
     extend: {
       colors: {
         jdred: '#C8202F',
-        jdgreen: '#146B4C',
+        jdgreen: '#1FAE74',
         ink: '#14171A',
-        slate: '#6B7480',
-        line: '#E6E8EA',
-        paper: '#FBFBFA',
+        slate: '#8A93A0',
+        line: '#2A2D33',
+        paper: '#1C1F24',
       },
       fontFamily: {
         sans: [

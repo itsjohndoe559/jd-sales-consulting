@@ -157,8 +157,8 @@ export default function AddSale() {
                         onClick={() => setMethod(m)}
                         className={`px-3 py-1.5 rounded-full text-sm border ${
                           method === m
-                            ? 'bg-ink text-white border-ink'
-                            : 'border-line text-ink'
+                            ? 'bg-jdred text-white border-jdred'
+                            : 'border-line text-slate'
                         }`}
                       >
                         {m}

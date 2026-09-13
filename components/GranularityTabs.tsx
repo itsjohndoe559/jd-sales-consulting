@@ -33,7 +33,7 @@ export default function GranularityTabs({
           key={o.value}
           onClick={() => select(o.value)}
           className={`px-2.5 py-1 rounded-full text-xs ${
-            value === o.value ? 'bg-ink text-white' : 'bg-line/50 text-ink'
+            value === o.value ? 'bg-jdred text-white' : 'bg-line/50 text-slate'
           }`}
         >
           {o.label}

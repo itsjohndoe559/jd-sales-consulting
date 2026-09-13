@@ -25,7 +25,7 @@ export default function Receipt({
   paid: boolean;
 }) {
   return (
-    <div className="card p-6 sm:p-8 bg-white w-full max-w-[420px] mx-auto">
+    <div className="doc-card p-6 sm:p-8 w-full max-w-[420px] mx-auto">
       <div className="flex justify-between items-start">
         <div>
           <div className="text-2xl font-bold leading-none">

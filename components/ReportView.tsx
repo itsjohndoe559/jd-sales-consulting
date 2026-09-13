@@ -5,7 +5,7 @@ export default function ReportView({ data }: { data: DailyReportData }) {
   const incomplete = data.cogs === null;
 
   return (
-    <div className="card p-6 sm:p-8 bg-white w-full max-w-[600px] mx-auto">
+    <div className="doc-card p-6 sm:p-8 w-full max-w-[600px] mx-auto">
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="text-2xl font-bold leading-none">

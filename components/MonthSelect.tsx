@@ -19,7 +19,7 @@ export default function MonthSelect({ value }: { value: string }) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="border border-line rounded px-2 py-1.5 text-sm bg-white"
+      className="border border-line rounded px-2 py-1.5 text-sm bg-ink text-white"
     >
       {months.map((m) => (
         <option key={m.value} value={m.value}>

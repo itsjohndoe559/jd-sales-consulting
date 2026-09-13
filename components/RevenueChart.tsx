@@ -25,16 +25,16 @@ export default function RevenueChart({
             <stop offset="100%" stopColor="#C8202F" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="#E6E8EA" />
+        <CartesianGrid vertical={false} stroke="#2A2D33" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: '#6B7480' }}
+          tick={{ fontSize: 11, fill: '#8A93A0' }}
           axisLine={false}
           tickLine={false}
           interval={Math.max(0, Math.floor(data.length / 6) - 1)}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: '#6B7480' }}
+          tick={{ fontSize: 11, fill: '#8A93A0' }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => `$${v}`}

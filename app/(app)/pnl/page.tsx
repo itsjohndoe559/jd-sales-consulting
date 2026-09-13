@@ -83,7 +83,7 @@ export default async function PnlPage({
             key={p}
             href={`/pnl?period=${p}`}
             className={`px-3 py-1.5 rounded-full text-sm capitalize ${
-              period === p ? 'bg-ink text-white' : 'bg-line/50 text-ink'
+              period === p ? 'bg-jdred text-white' : 'bg-line/50 text-slate'
             }`}
           >
             {p}

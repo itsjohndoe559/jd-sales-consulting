@@ -190,7 +190,7 @@ export default function MarginAnalysis({
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-1.5 rounded-full text-sm ${
-              tab === t ? 'bg-ink text-white' : 'bg-line/50 text-ink'
+              tab === t ? 'bg-jdred text-white' : 'bg-line/50 text-slate'
             }`}
           >
             {t}
@@ -335,7 +335,7 @@ export default function MarginAnalysis({
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
                     <Cell fill="#C8202F" />
-                    <Cell fill="#146B4C" />
+                    <Cell fill="#1FAE74" />
                   </Pie>
                   <Tooltip formatter={(v: number) => money(v)} />
                   <Legend />

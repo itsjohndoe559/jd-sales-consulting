@@ -20,15 +20,15 @@ export default function PnlChart({
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data}>
-        <CartesianGrid vertical={false} stroke="#E6E8EA" />
+        <CartesianGrid vertical={false} stroke="#2A2D33" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: '#6B7480' }}
+          tick={{ fontSize: 11, fill: '#8A93A0' }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: '#6B7480' }}
+          tick={{ fontSize: 11, fill: '#8A93A0' }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => `$${v}`}
@@ -36,7 +36,7 @@ export default function PnlChart({
         <Tooltip formatter={(v: number) => money(v)} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         <Bar dataKey="revenue" name="Revenue" fill="#C8202F" radius={[3, 3, 0, 0]} />
-        <Bar dataKey="profit" name="Profit" fill="#146B4C" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="profit" name="Profit" fill="#1FAE74" radius={[3, 3, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
