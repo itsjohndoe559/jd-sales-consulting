@@ -62,6 +62,9 @@ export type DailyReportData = {
   missingCostSkus: string[];
   dailyProfit: number | null;
   transactionCount: number;
+  cashTotal: number;
+  digitalTotal: number;
+  otherTotal: number;
   inventoryChanges: InventoryChange[];
   lowStock: LowStockRow[];
 };

@@ -80,6 +80,25 @@ export function buildDailyReportEmail(data: DailyReportData): string {
           : ''
       }
 
+      <table width="100%" style="border-collapse:collapse;margin-bottom:20px;">
+        <tr>
+          <td style="width:33.3%;padding:10px;border:1px solid #E6E8EA;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;text-transform:uppercase;color:#6B7480;">Cash</div>
+            <div style="font-size:15px;font-weight:700;">${money(data.cashTotal ?? 0)}</div>
+          </td>
+          <td style="width:8px;"></td>
+          <td style="width:33.3%;padding:10px;border:1px solid #E6E8EA;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;text-transform:uppercase;color:#6B7480;">Digital</div>
+            <div style="font-size:15px;font-weight:700;">${money(data.digitalTotal ?? 0)}</div>
+          </td>
+          <td style="width:8px;"></td>
+          <td style="width:33.3%;padding:10px;border:1px solid #E6E8EA;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;text-transform:uppercase;color:#6B7480;">Other</div>
+            <div style="font-size:15px;font-weight:700;">${money(data.otherTotal ?? 0)}</div>
+          </td>
+        </tr>
+      </table>
+
       <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Profit &amp; Loss</div>
       <table width="100%" style="border-collapse:collapse;font-size:14px;margin-bottom:20px;">
         ${row('Revenue', money(data.dailyRevenue))}
@@ -132,6 +151,10 @@ export function buildDailyReportEmailText(data: DailyReportData): string {
     `Profit: ${data.dailyProfit === null ? 'Incomplete (some SKUs missing cost)' : money(data.dailyProfit)}`,
     `COGS: ${data.cogs === null ? 'n/a' : money(data.cogs)}`,
     `Transactions: ${data.transactionCount}`,
+    '',
+    `Cash: ${money(data.cashTotal ?? 0)}`,
+    `Digital: ${money(data.digitalTotal ?? 0)}`,
+    `Other: ${money(data.otherTotal ?? 0)}`,
   ];
 
   if (data.inventoryChanges.length > 0) {

@@ -1,5 +1,5 @@
 /**
- * Renders a DOM node to a PDF and triggers a download.
+ * Renders a DOM node to a PDF.
  *
  * The crop/clipping bug came from feeding html2canvas's raw pixel
  * dimensions straight into jsPDF with unit: 'px'. jsPDF's 'px' unit
@@ -9,10 +9,7 @@
  * page at the wrong physical size. Converting explicitly to points before
  * building the PDF makes the physical page size unambiguous everywhere.
  */
-export async function downloadElementAsPdf(
-  element: HTMLElement,
-  filename: string
-) {
+async function renderElementToPdf(element: HTMLElement) {
   const html2canvas = (await import('html2canvas')).default;
   const { jsPDF } = await import('jspdf');
 
@@ -33,5 +30,17 @@ export async function downloadElementAsPdf(
 
   const imgData = canvas.toDataURL('image/png');
   pdf.addImage(imgData, 'PNG', 0, 0, widthPt, heightPt);
+  return pdf;
+}
+
+export async function downloadElementAsPdf(element: HTMLElement, filename: string) {
+  const pdf = await renderElementToPdf(element);
   pdf.save(filename);
+}
+
+/** Same rendering, but returns a Blob instead of triggering a download -
+ * used to bundle multiple PDFs into a single ZIP. */
+export async function elementToPdfBlob(element: HTMLElement): Promise<Blob> {
+  const pdf = await renderElementToPdf(element);
+  return pdf.output('blob');
 }

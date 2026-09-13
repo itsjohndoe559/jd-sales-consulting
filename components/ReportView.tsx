@@ -56,6 +56,27 @@ export default function ReportView({ data }: { data: DailyReportData }) {
         </div>
       )}
 
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="border border-line rounded p-3 text-center">
+          <div className="text-[10px] text-slate uppercase">Cash</div>
+          <div className="text-base font-bold tabular">
+            {money(data.cashTotal ?? 0)}
+          </div>
+        </div>
+        <div className="border border-line rounded p-3 text-center">
+          <div className="text-[10px] text-slate uppercase">Digital</div>
+          <div className="text-base font-bold tabular">
+            {money(data.digitalTotal ?? 0)}
+          </div>
+        </div>
+        <div className="border border-line rounded p-3 text-center">
+          <div className="text-[10px] text-slate uppercase">Other</div>
+          <div className="text-base font-bold tabular">
+            {money(data.otherTotal ?? 0)}
+          </div>
+        </div>
+      </div>
+
       <div className="mb-6">
         <div className="text-sm font-bold mb-2">Profit &amp; Loss</div>
         <div className="text-sm border-t border-line">

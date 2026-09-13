@@ -55,10 +55,16 @@ export async function computeDailyReportData(
   let dailyRevenue = 0;
   let unitsSold = 0;
   let cogs = 0;
+  let cashTotal = 0;
+  let digitalTotal = 0;
+  let otherTotal = 0;
   const missing = new Set<string>();
 
   for (const t of txns ?? []) {
     dailyRevenue += t.total;
+    if (t.payment_method === 'Cash') cashTotal += t.total;
+    else if (t.payment_method === 'Other') otherTotal += t.total;
+    else digitalTotal += t.total; // Zelle, Apple Pay, Cash App
     for (const item of t.items as LineItem[]) {
       unitsSold += item.qty;
       const cost = costBySku.get(item.sku);
@@ -121,6 +127,9 @@ export async function computeDailyReportData(
     missingCostSkus,
     dailyProfit: complete ? dailyRevenue - cogs : null,
     transactionCount: (txns ?? []).length,
+    cashTotal,
+    digitalTotal,
+    otherTotal,
     inventoryChanges,
     lowStock,
   };
