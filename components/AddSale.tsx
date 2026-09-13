@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { money, dateTime } from '@/lib/format';
 import { downloadElementAsPdf } from '@/lib/pdf';
+import { useAddSale } from './AddSaleContext';
 import type { Product, LineItem, PaymentMethod } from '@/lib/types';
 import Receipt from './Receipt';
 
@@ -29,7 +30,7 @@ type Result = {
 
 export default function AddSale() {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useAddSale();
   const [step, setStep] = useState<'form' | 'receipt'>('form');
   const [openedAt, setOpenedAt] = useState<Date | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,15 +49,19 @@ export default function AddSale() {
     }
   }, [open, products.length]);
 
-  function launch() {
-    setOpen(true);
-    setStep('form');
-    setOpenedAt(new Date());
-    setItems([]);
-    setMethod(null);
-    setQuery('');
-    setResult(null);
-  }
+  // Reset the form fresh every time the modal opens, regardless of which
+  // button triggered it (mobile header, desktop header - both just flip
+  // `open` via context now, rather than calling a dedicated launch()).
+  useEffect(() => {
+    if (open) {
+      setStep('form');
+      setOpenedAt(new Date());
+      setItems([]);
+      setMethod(null);
+      setQuery('');
+      setResult(null);
+    }
+  }, [open]);
 
   function close() {
     setOpen(false);
@@ -122,13 +127,6 @@ export default function AddSale() {
 
   return (
     <>
-      <button
-        onClick={launch}
-        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-jdred text-white rounded-full md:rounded-lg px-5 py-3 font-medium shadow-lg z-40"
-      >
-        + Add Sale
-      </button>
-
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-md max-h-[90vh] overflow-y-auto p-6">

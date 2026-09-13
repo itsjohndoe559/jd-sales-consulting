@@ -1,5 +1,6 @@
 import AppShell from '@/components/AppShell';
 import AddSale from '@/components/AddSale';
+import { AddSaleProvider } from '@/components/AddSaleContext';
 
 export default function AppLayout({
   children,
@@ -7,9 +8,11 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppShell>
-      {children}
-      <AddSale />
-    </AppShell>
+    <AddSaleProvider>
+      <AppShell>
+        {children}
+        <AddSale />
+      </AppShell>
+    </AddSaleProvider>
   );
 }
