@@ -33,8 +33,18 @@ export default function PnlChart({
           tickLine={false}
           tickFormatter={(v) => `$${v}`}
         />
-        <Tooltip formatter={(v: number) => money(v)} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Tooltip
+          formatter={(v: number) => money(v)}
+          contentStyle={{
+            background: '#16181C',
+            border: '1px solid #2A2D33',
+            borderRadius: 8,
+            color: '#EDEEF0',
+          }}
+          labelStyle={{ color: '#EDEEF0' }}
+          itemStyle={{ color: '#EDEEF0' }}
+        />
+        <Legend wrapperStyle={{ fontSize: 12, color: '#EDEEF0' }} />
         <Bar dataKey="revenue" name="Revenue" fill="#C8202F" radius={[3, 3, 0, 0]} />
         <Bar dataKey="profit" name="Profit" fill="#1FAE74" radius={[3, 3, 0, 0]} />
       </BarChart>

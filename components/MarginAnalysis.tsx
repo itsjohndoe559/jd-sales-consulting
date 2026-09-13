@@ -337,8 +337,18 @@ export default function MarginAnalysis({
                     <Cell fill="#C8202F" />
                     <Cell fill="#1FAE74" />
                   </Pie>
-                  <Tooltip formatter={(v: number) => money(v)} />
-                  <Legend />
+                  <Tooltip
+                    formatter={(v: number) => money(v)}
+                    contentStyle={{
+                      background: '#16181C',
+                      border: '1px solid #2A2D33',
+                      borderRadius: 8,
+                      color: '#EDEEF0',
+                    }}
+                    labelStyle={{ color: '#EDEEF0' }}
+                    itemStyle={{ color: '#EDEEF0' }}
+                  />
+                  <Legend wrapperStyle={{ color: '#EDEEF0' }} />
                 </PieChart>
               </ResponsiveContainer>
             )}
