@@ -88,3 +88,19 @@ export type BusinessFile = {
   size_bytes: number | null;
   uploaded_at: string;
 };
+
+export type DeductionCategory = 'Subscriptions' | 'Services' | 'Equipment' | 'Gas' | 'Other';
+export type DeductionType = 'one-time' | 'recurring';
+
+export type Deduction = {
+  id: string;
+  name: string;
+  amount: number;
+  category: DeductionCategory;
+  type: DeductionType;
+  day_of_month: number | null;
+  start_date: string; // 'YYYY-MM-DD'
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+};

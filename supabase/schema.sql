@@ -84,6 +84,24 @@ insert into storage.buckets (id, name, public)
 values ('business-files', 'business-files', false)
 on conflict (id) do nothing;
 
+-- Deductions: recurring monthly charges and one-time deductions, tracked
+-- separately from P&L/daily reports (bookkeeping-only, per spec).
+create table if not exists deductions (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  amount numeric(10, 2) not null,
+  category text not null, -- 'Subscriptions' | 'Services' | 'Equipment' | 'Gas' | 'Other'
+  type text not null, -- 'one-time' | 'recurring'
+  day_of_month integer, -- for recurring: which day (1-31)
+  start_date date not null,
+  end_date date, -- optional; if null, recurring runs indefinitely
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_deductions_active on deductions(start_date, end_date);
+alter table deductions enable row level security;
+
 alter table products enable row level security;
 alter table inventory_adjustments enable row level security;
 alter table transactions enable row level security;
