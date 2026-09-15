@@ -60,13 +60,25 @@ export default function FilesClient({ files }: { files: BusinessFile[] }) {
   }, [files, search, categories]);
 
   async function view(f: BusinessFile) {
+    // Open the tab synchronously, in direct response to the tap - if we
+    // wait for the fetch first, mobile browsers no longer treat the
+    // window.open() as user-initiated and silently block it (no error,
+    // it just does nothing, which is exactly what was happening here).
+    const newTab = window.open('', '_blank', 'noopener,noreferrer');
     setBusyId(f.id);
     const res = await fetch(`/api/files/${f.id}`);
     setBusyId(null);
     if (res.ok) {
       const data = await res.json();
-      window.open(data.url, '_blank', 'noopener,noreferrer');
+      if (newTab) {
+        newTab.location.href = data.url;
+      } else {
+        // Pop-up was blocked outright (e.g. browser setting) - fall back
+        // to navigating the current tab instead of doing nothing.
+        window.location.href = data.url;
+      }
     } else {
+      newTab?.close();
       alert('Could not open that file. Try again.');
     }
   }
