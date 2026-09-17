@@ -61,10 +61,65 @@ function StockForm({
         >
           {saving ? 'Saving...' : 'Save'}
         </button>
+        <button onClick={onCancel} className="text-sm text-slate px-2">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EditInfoForm({
+  sku,
+  name,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  sku: string;
+  name: string;
+  onSave: (newSku: string, newName: string) => void;
+  onCancel: () => void;
+  saving: boolean;
+}) {
+  const [skuValue, setSkuValue] = useState(sku);
+  const [nameValue, setNameValue] = useState(name);
+
+  return (
+    <div className="bg-paper rounded p-3 mt-2">
+      <div className="flex flex-wrap items-end gap-2">
+        <div>
+          <div className="text-xs text-slate mb-1">SKU</div>
+          <input
+            type="text"
+            value={skuValue}
+            onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
+            className="w-28 border border-line rounded px-2 py-1"
+          />
+        </div>
+        <div className="flex-1 min-w-[160px]">
+          <div className="text-xs text-slate mb-1">Item name</div>
+          <input
+            type="text"
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+            className="w-full border border-line rounded px-2 py-1"
+          />
+        </div>
+      </div>
+      <div className="text-xs text-slate mt-2">
+        Renaming the SKU updates every past sale and invoice to match, so
+        history stays linked to this item under its new code.
+      </div>
+      <div className="flex gap-2 mt-2">
         <button
-          onClick={onCancel}
-          className="text-sm text-slate px-2"
+          onClick={() => onSave(skuValue.trim(), nameValue.trim())}
+          disabled={saving}
+          className="bg-jdred text-white rounded px-3 py-1.5 text-sm"
         >
+          {saving ? 'Saving...' : 'Save'}
+        </button>
+        <button onClick={onCancel} className="text-sm text-slate px-2">
           Cancel
         </button>
       </div>
@@ -75,7 +130,9 @@ function StockForm({
 export default function InventoryTable({ rows }: { rows: Row[] }) {
   const router = useRouter();
   const [editingStockSku, setEditingStockSku] = useState<string | null>(null);
+  const [editingInfoSku, setEditingInfoSku] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
   async function saveField(sku: string, field: 'price' | 'cost', value: string) {
     const num = value === '' ? null : Number(value);
@@ -104,6 +161,24 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
     setSaving(false);
     setEditingStockSku(null);
     router.refresh();
+  }
+
+  async function renameProduct(sku: string, newSku: string, newName: string) {
+    if (!newSku || !newName) return;
+    setRenaming(true);
+    const res = await fetch('/api/products', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sku, newSku, newName }),
+    });
+    setRenaming(false);
+    if (res.ok) {
+      setEditingInfoSku(null);
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? 'Could not save those changes.');
+    }
   }
 
   return (
@@ -153,20 +228,39 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
                 />
               </div>
             </div>
-            <button
-              onClick={() =>
-                setEditingStockSku(editingStockSku === p.sku ? null : p.sku)
-              }
-              className="text-xs text-jdred underline"
-            >
-              + Stock
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() =>
+                  setEditingStockSku(editingStockSku === p.sku ? null : p.sku)
+                }
+                className="text-xs text-jdred underline"
+              >
+                + Stock
+              </button>
+              <button
+                onClick={() =>
+                  setEditingInfoSku(editingInfoSku === p.sku ? null : p.sku)
+                }
+                className="text-xs text-slate underline"
+              >
+                Edit SKU/Name
+              </button>
+            </div>
             {editingStockSku === p.sku && (
               <StockForm
                 sku={p.sku}
                 saving={saving}
                 onCancel={() => setEditingStockSku(null)}
                 onSave={(qty, unitCost, note) => addStock(p.sku, qty, unitCost, note)}
+              />
+            )}
+            {editingInfoSku === p.sku && (
+              <EditInfoForm
+                sku={p.sku}
+                name={p.name}
+                saving={renaming}
+                onCancel={() => setEditingInfoSku(null)}
+                onSave={(newSku, newName) => renameProduct(p.sku, newSku, newName)}
               />
             )}
           </div>
@@ -222,16 +316,28 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
                   {p.onHand}
                 </td>
                 <td className="py-2 text-right">
-                  <button
-                    onClick={() =>
-                      setEditingStockSku(
-                        editingStockSku === p.sku ? null : p.sku
-                      )
-                    }
-                    className="text-xs text-jdred underline"
-                  >
-                    + Stock
-                  </button>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() =>
+                        setEditingStockSku(
+                          editingStockSku === p.sku ? null : p.sku
+                        )
+                      }
+                      className="text-xs text-jdred underline"
+                    >
+                      + Stock
+                    </button>
+                    <button
+                      onClick={() =>
+                        setEditingInfoSku(
+                          editingInfoSku === p.sku ? null : p.sku
+                        )
+                      }
+                      className="text-xs text-slate underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </td>
               </tr>
               {editingStockSku === p.sku && (
@@ -244,6 +350,19 @@ export default function InventoryTable({ rows }: { rows: Row[] }) {
                       onSave={(qty, unitCost, note) =>
                         addStock(p.sku, qty, unitCost, note)
                       }
+                    />
+                  </td>
+                </tr>
+              )}
+              {editingInfoSku === p.sku && (
+                <tr className="bg-paper">
+                  <td colSpan={6} className="py-3">
+                    <EditInfoForm
+                      sku={p.sku}
+                      name={p.name}
+                      saving={renaming}
+                      onCancel={() => setEditingInfoSku(null)}
+                      onSave={(newSku, newName) => renameProduct(p.sku, newSku, newName)}
                     />
                   </td>
                 </tr>

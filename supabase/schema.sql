@@ -12,7 +12,7 @@ create table if not exists products (
 
 create table if not exists inventory_adjustments (
   id uuid primary key default gen_random_uuid(),
-  sku text not null references products(sku),
+  sku text not null references products(sku) on update cascade,
   change integer not null, -- positive = stock in, negative = stock out
   reason text not null,    -- 'purchase' | 'sale' | 'manual'
   note text,
@@ -101,6 +101,14 @@ create table if not exists deductions (
 
 create index if not exists idx_deductions_active on deductions(start_date, end_date);
 alter table deductions enable row level security;
+
+-- Migration (run once): your inventory_adjustments table already exists
+-- without ON UPDATE CASCADE on its sku foreign key, so editing a SKU code
+-- on the Inventory page would otherwise fail outright with a foreign key
+-- violation. This lets a products.sku rename cascade automatically.
+alter table inventory_adjustments drop constraint if exists inventory_adjustments_sku_fkey;
+alter table inventory_adjustments add constraint inventory_adjustments_sku_fkey
+  foreign key (sku) references products(sku) on update cascade;
 
 alter table products enable row level security;
 alter table inventory_adjustments enable row level security;

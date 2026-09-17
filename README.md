@@ -68,6 +68,14 @@ Next.js + Supabase + Vercel. Single shared passcode, no per-user accounts.
 - Margin Analysis (on the P&L page) uses its own date range rather than
   matching the chart above it exactly, per spec: Weekly = last 7 days,
   Monthly = the current calendar month, YTD = all-time.
+- Editing a SKU code from the Inventory page rewrites that SKU into every
+  historical transaction/invoice line item that referenced the old one
+  (not just the products row), so past sales stay linked to the renamed
+  item instead of pointing at a code that no longer exists. This is only
+  safe because of the migration in supabase/schema.sql adding
+  `on update cascade` to inventory_adjustments' foreign key on sku -
+  without it, renaming a SKU with any purchase/sale history would fail
+  outright with a foreign key violation.
 
 ## Support
 
