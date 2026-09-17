@@ -123,6 +123,24 @@ export async function PATCH(req: NextRequest) {
   if (price !== undefined) priceCostUpdate.price = price;
   if (cost !== undefined) priceCostUpdate.cost = cost;
 
+  // An empty update payload (e.g. a rename-only request that never touched
+  // price/cost) makes PostgREST's UPDATE match nothing to actually set,
+  // and .single() then throws "Cannot coerce the result to a single JSON
+  // object" - the rename above had already succeeded at that point, but
+  // this route still reported failure back to the client. Skip straight
+  // to a plain SELECT when there's nothing left to update.
+  if (Object.keys(priceCostUpdate).length === 0) {
+    const { data, error } = await sb
+      .from('products')
+      .select()
+      .eq('sku', currentSku)
+      .single();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ product: data });
+  }
+
   const { data, error } = await sb
     .from('products')
     .update(priceCostUpdate)
