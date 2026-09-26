@@ -1,5 +1,5 @@
 import { supabaseServer } from './supabase';
-import { businessDayRange } from './format';
+import { businessDayRange, channelFor3 } from './format';
 import type { LineItem, InventoryChange, DailyReportData, DailyReport } from './types';
 
 export const EARLIEST_REPORT_DATE = '2026-09-08';
@@ -62,8 +62,9 @@ export async function computeDailyReportData(
 
   for (const t of txns ?? []) {
     dailyRevenue += t.total;
-    if (t.payment_method === 'Cash') cashTotal += t.total;
-    else if (t.payment_method === 'Other') otherTotal += t.total;
+    const channel = channelFor3(t.payment_method);
+    if (channel === 'Cash') cashTotal += t.total;
+    else if (channel === 'Other') otherTotal += t.total;
     else digitalTotal += t.total; // Zelle, Apple Pay, Cash App
     for (const item of t.items as LineItem[]) {
       unitsSold += item.qty;

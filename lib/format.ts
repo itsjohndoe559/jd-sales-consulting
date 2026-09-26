@@ -135,7 +135,20 @@ export function businessWeekday(iso: string) {
   });
 }
 
-/** Channel bucket used for the Cash/Digital filter chips. */
+/** Channel bucket used for the Cash/Digital filter chips (2-way). */
 export function channelFor(method: string): 'Cash' | 'Digital' {
   return method === 'Cash' ? 'Cash' : 'Digital';
+}
+
+/**
+ * 3-way channel split used by Daily Reports and Margin Analysis: Cash,
+ * Other, and Digital (everything else - Zelle, Apple Pay, Cash App).
+ * This is the canonical classification other Cash/Digital/Other
+ * breakdowns should match - reportMetrics.ts (the actual Daily Report,
+ * which is also what gets emailed) uses this exact function.
+ */
+export function channelFor3(method: string): 'Cash' | 'Digital' | 'Other' {
+  if (method === 'Cash') return 'Cash';
+  if (method === 'Other') return 'Other';
+  return 'Digital';
 }

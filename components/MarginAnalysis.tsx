@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { money, businessWeekday, channelFor } from '@/lib/format';
+import { money, businessWeekday, channelFor3 } from '@/lib/format';
 import PnlChart from './PnlChart';
 import type { Product, Transaction } from '@/lib/types';
 
@@ -17,6 +17,8 @@ const TABS = ['By Product', 'By Day of Week', 'By Sales Channel'] as const;
 type Tab = (typeof TABS)[number];
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const CHANNEL_COLORS = { Cash: '#C8202F', Digital: '#1FAE74', Other: '#8A93A0' } as const;
 
 type ProductRow = {
   sku: string;
@@ -32,7 +34,14 @@ type SortKey = 'name' | 'units' | 'revenue' | 'cogs' | 'profit' | 'margin';
 
 function computeByProduct(transactions: Transaction[], products: Product[]): ProductRow[] {
   const costBySku = new Map(products.map((p) => [p.sku, p.cost]));
+  // Seed every known product first (units/revenue 0), then accumulate
+  // sales on top - otherwise a SKU that sold out earlier and had zero
+  // sales in the selected period, or one that's never sold at all,
+  // silently disappears from this table instead of showing $0.
   const bySku = new Map<string, { name: string; units: number; revenue: number }>();
+  for (const p of products) {
+    bySku.set(p.sku, { name: p.name, units: 0, revenue: 0 });
+  }
 
   for (const t of transactions) {
     if (t.voided) continue;
@@ -147,12 +156,16 @@ export default function MarginAnalysis({
   }, [byWeekday]);
 
   const byChannel = useMemo(() => {
-    const channels = { Cash: { units: 0, revenue: 0, cogs: 0, incomplete: false, count: 0 }, Digital: { units: 0, revenue: 0, cogs: 0, incomplete: false, count: 0 } };
+    const channels = {
+      Cash: { units: 0, revenue: 0, cogs: 0, incomplete: false, count: 0 },
+      Digital: { units: 0, revenue: 0, cogs: 0, incomplete: false, count: 0 },
+      Other: { units: 0, revenue: 0, cogs: 0, incomplete: false, count: 0 },
+    };
     const costBySku = new Map(products.map((p) => [p.sku, p.cost]));
 
     for (const t of transactions) {
       if (t.voided) continue;
-      const ch = channelFor(t.payment_method);
+      const ch = channelFor3(t.payment_method);
       const bucket = channels[ch];
       bucket.revenue += t.total;
       bucket.count += 1;
@@ -170,6 +183,7 @@ export default function MarginAnalysis({
   const pieData = [
     { name: 'Cash', value: byChannel.Cash.revenue },
     { name: 'Digital', value: byChannel.Digital.revenue },
+    { name: 'Other', value: byChannel.Other.revenue },
   ].filter((d) => d.value > 0);
 
   const columns: { key: SortKey; label: string; align?: 'right' }[] = [
@@ -286,8 +300,8 @@ export default function MarginAnalysis({
       )}
 
       {tab === 'By Sales Channel' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(['Cash', 'Digital'] as const).map((ch) => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(['Cash', 'Digital', 'Other'] as const).map((ch) => {
             const c = byChannel[ch];
             const profit = c.incomplete ? null : c.revenue - c.cogs;
             const margin = profit !== null && c.revenue > 0 ? (profit / c.revenue) * 100 : null;
@@ -326,7 +340,7 @@ export default function MarginAnalysis({
             );
           })}
 
-          <div className="card p-4 md:col-span-2">
+          <div className="card p-4 md:col-span-3">
             <div className="text-sm font-bold mb-3">Revenue Split</div>
             {pieData.length === 0 ? (
               <div className="text-sm text-slate italic">No sales yet.</div>
@@ -334,8 +348,9 @@ export default function MarginAnalysis({
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} label>
-                    <Cell fill="#C8202F" />
-                    <Cell fill="#1FAE74" />
+                    {pieData.map((d) => (
+                      <Cell key={d.name} fill={CHANNEL_COLORS[d.name as keyof typeof CHANNEL_COLORS]} />
+                    ))}
                   </Pie>
                   <Tooltip
                     formatter={(v: number) => money(v)}
