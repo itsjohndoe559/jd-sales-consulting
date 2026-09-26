@@ -8,7 +8,7 @@ import {
   monthRangeFor,
   inRange,
 } from '@/lib/analytics';
-import { money, businessDayRange, todayInBusinessTz, addDaysToDateStr } from '@/lib/format';
+import { money, businessDayRange } from '@/lib/format';
 import PnlChart from '@/components/PnlChart';
 import MarginAnalysis from '@/components/MarginAnalysis';
 
@@ -51,17 +51,20 @@ export default async function PnlPage({
     ? null
     : buckets.reduce((s, b) => s + (b.profit ?? 0), 0);
 
-  // The Margin Analysis section below has its own, simpler range semantics
-  // per the feature spec: Weekly = last 7 days, Monthly = current month,
-  // YTD = all-time - independent of how the chart above buckets its weeks.
-  const todayStr = todayInBusinessTz();
+  // Margin Analysis now always covers the exact same underlying range as
+  // whichever period the chart above is showing - it used to define
+  // "Weekly" as literally the last 7 days while the chart's "Weekly" meant
+  // "this month, bucketed by week," so the same button silently meant two
+  // different date ranges on the same page. That's what made a SKU with
+  // real sales earlier in the month show $0 in Margin Analysis while the
+  // chart above clearly showed it sold.
   let analysisStart: Date;
   let analysisEnd: Date;
   if (period === 'weekly') {
-    analysisStart = businessDayRange(addDaysToDateStr(todayStr, -6)).start;
-    analysisEnd = businessDayRange(todayStr).end;
-  } else if (period === 'monthly') {
     ({ start: analysisStart, end: analysisEnd } = monthRangeFor(monthStr));
+  } else if (period === 'monthly') {
+    analysisStart = businessDayRange(`${currentYear}-01-01`).start;
+    analysisEnd = monthRangeFor(monthStr).end;
   } else {
     analysisStart = businessDayRange(`${currentYear}-01-01`).start;
     analysisEnd = new Date();
