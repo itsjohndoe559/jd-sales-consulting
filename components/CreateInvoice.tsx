@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { money } from '@/lib/format';
+import { rankBySkuThenName } from '@/lib/search';
 import type { Product, LineItem } from '@/lib/types';
 
 export default function CreateInvoice() {
@@ -24,16 +25,13 @@ export default function CreateInvoice() {
     }
   }, [open, products.length]);
 
-  const suggestions =
-    query.trim().length === 0
-      ? []
-      : products
-          .filter(
-            (p) =>
-              p.sku.toLowerCase().includes(query.toLowerCase()) ||
-              p.name.toLowerCase().includes(query.toLowerCase())
-          )
-          .slice(0, 4);
+  const suggestions = rankBySkuThenName(
+    products,
+    query,
+    (p) => p.sku,
+    (p) => p.name,
+    4
+  );
 
   function addItem(p: Product) {
     setItems((prev) => {

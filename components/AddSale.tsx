@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { money, dateTime } from '@/lib/format';
 import { downloadElementAsPdf } from '@/lib/pdf';
+import { rankBySkuThenName } from '@/lib/search';
 import { useAddSale } from './AddSaleContext';
 import type { Product, LineItem, PaymentMethod } from '@/lib/types';
 import Receipt from './Receipt';
@@ -67,16 +68,13 @@ export default function AddSale() {
     setOpen(false);
   }
 
-  const suggestions =
-    query.trim().length === 0
-      ? []
-      : products
-          .filter(
-            (p) =>
-              p.sku.toLowerCase().includes(query.toLowerCase()) ||
-              p.name.toLowerCase().includes(query.toLowerCase())
-          )
-          .slice(0, 4);
+  const suggestions = rankBySkuThenName(
+    products,
+    query,
+    (p) => p.sku,
+    (p) => p.name,
+    4
+  );
 
   function addItem(p: Product) {
     setItems((prev) => {

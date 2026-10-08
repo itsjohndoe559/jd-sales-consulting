@@ -6,6 +6,7 @@ import { businessDayRange } from '@/lib/format';
 import SearchBar from './SearchBar';
 import FilterChips from './FilterChips';
 import TransactionRow from './TransactionRow';
+import { matchScore } from '@/lib/search';
 import type { Transaction, PaymentMethod } from '@/lib/types';
 
 const METHODS: PaymentMethod[] = ['Cash', 'Zelle', 'Apple Pay', 'Cash App', 'Other'];
@@ -53,19 +54,34 @@ export default function TransactionsClient({
     const endBoundary = endDate ? businessDayRange(endDate).end : null;
     const q = search.trim().toLowerCase();
 
-    return transactions.filter((t) => {
-      if (methods.length > 0 && !methods.includes(t.payment_method)) return false;
-      const created = new Date(t.created_at);
-      if (startBoundary && created < startBoundary) return false;
-      if (endBoundary && created > endBoundary) return false;
-      if (q) {
-        const matches = t.items.some(
-          (i) => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q)
-        );
-        if (!matches) return false;
-      }
-      return true;
-    });
+    const withScore = transactions
+      .map((t) => {
+        let bestScore: number | null = q ? null : 0;
+        if (q) {
+          for (const i of t.items) {
+            const s = matchScore(q, i.sku, i.name);
+            if (s !== null && (bestScore === null || s < bestScore)) bestScore = s;
+          }
+        }
+        return { t, score: bestScore };
+      })
+      .filter(({ t, score }) => {
+        if (methods.length > 0 && !methods.includes(t.payment_method)) return false;
+        const created = new Date(t.created_at);
+        if (startBoundary && created < startBoundary) return false;
+        if (endBoundary && created > endBoundary) return false;
+        if (q && score === null) return false;
+        return true;
+      });
+
+    // SKU matches first (lower score = better); only reorders while a
+    // search query is active, otherwise everything scores 0 and the
+    // existing (most-recent-first) order holds.
+    if (q) {
+      withScore.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+    }
+
+    return withScore.map((x) => x.t);
   }, [transactions, methods, startDate, endDate, search]);
 
   const totalUnits = filtered.reduce(

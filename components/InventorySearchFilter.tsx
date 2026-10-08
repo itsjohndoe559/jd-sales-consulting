@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import SearchBar from './SearchBar';
 import FilterChips from './FilterChips';
 import InventoryTable from './InventoryTable';
+import { matchScore } from '@/lib/search';
 import type { Product } from '@/lib/types';
 
 type Row = Product & { onHand: number };
@@ -48,23 +49,31 @@ export default function InventorySearchFilter({ rows }: { rows: Row[] }) {
     const min = minPrice ? Number(minPrice) : null;
     const max = maxPrice ? Number(maxPrice) : null;
 
-    return rows.filter((r) => {
-      if (q && !r.sku.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q)) {
-        return false;
-      }
-      if (stockStatuses.length > 0) {
-        const isLow = r.onHand <= 10;
-        if (stockStatuses.includes('Low Stock') && !stockStatuses.includes('In Stock') && !isLow) {
-          return false;
+    const withScore = rows
+      .map((r) => ({ row: r, score: q ? matchScore(q, r.sku, r.name) : 0 }))
+      .filter(({ row: r, score }) => {
+        if (q && score === null) return false;
+        if (stockStatuses.length > 0) {
+          const isLow = r.onHand <= 10;
+          if (stockStatuses.includes('Low Stock') && !stockStatuses.includes('In Stock') && !isLow) {
+            return false;
+          }
+          if (stockStatuses.includes('In Stock') && !stockStatuses.includes('Low Stock') && isLow) {
+            return false;
+          }
         }
-        if (stockStatuses.includes('In Stock') && !stockStatuses.includes('Low Stock') && isLow) {
-          return false;
-        }
-      }
-      if (min !== null && r.price < min) return false;
-      if (max !== null && r.price > max) return false;
-      return true;
-    });
+        if (min !== null && r.price < min) return false;
+        if (max !== null && r.price > max) return false;
+        return true;
+      });
+
+    // SKU matches first (lower score = better), but only when a search is
+    // active - without a query everything scores 0 and original order holds.
+    if (q) {
+      withScore.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+    }
+
+    return withScore.map((x) => x.row);
   }, [rows, search, stockStatuses, minPrice, maxPrice]);
 
   const activeFilterCount =
