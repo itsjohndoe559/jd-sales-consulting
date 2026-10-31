@@ -1,4 +1,5 @@
 import { supabaseServer } from './supabase';
+import { fetchAll } from './fetchAll';
 import { businessDayRange, channelFor3 } from './format';
 import type { LineItem, InventoryChange, DailyReportData, DailyReport } from './types';
 
@@ -105,14 +106,24 @@ export async function computeDailyReportData(
 
   // Low stock as of the END of this report day, not "now" - so a past
   // report stays accurate even as current stock changes.
-  const { data: allAdjustmentsToDate, error: allAdjError } = await sb
-    .from('inventory_adjustments')
-    .select('sku, change')
-    .lte('created_at', end.toISOString());
-  if (allAdjError) throw new ReportError(allAdjError.message);
+  // Paged (lib/fetchAll.ts) - a plain select caps at 1,000 rows and
+  // silently froze these low-stock numbers once the table grew past that.
+  let allAdjustmentsToDate: { sku: string; change: number }[];
+  try {
+    allAdjustmentsToDate = await fetchAll<{ sku: string; change: number }>((from, to) =>
+      sb
+        .from('inventory_adjustments')
+        .select('sku, change')
+        .lte('created_at', end.toISOString())
+        .order('id', { ascending: true })
+        .range(from, to)
+    );
+  } catch (e) {
+    throw new ReportError(e instanceof Error ? e.message : String(e));
+  }
 
   const onHand: Record<string, number> = {};
-  for (const row of allAdjustmentsToDate ?? []) {
+  for (const row of allAdjustmentsToDate) {
     onHand[row.sku] = (onHand[row.sku] ?? 0) + row.change;
   }
   const lowStock = (products ?? [])
