@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
+import { fetchAll } from '@/lib/fetchAll';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -169,8 +170,11 @@ async function relinkHistoricalItems(
 ) {
   type Item = { sku: string; name: string; price: number; qty: number };
 
-  const { data: txns } = await sb.from('transactions').select('id, items');
-  for (const t of txns ?? []) {
+  // Paged so a rename relinks every row, not just the first 1,000.
+  const txns = await fetchAll<{ id: string; items: unknown }>((from, to) =>
+    sb.from('transactions').select('id, items').order('id', { ascending: true }).range(from, to)
+  );
+  for (const t of txns) {
     const items = t.items as Item[];
     if (!items.some((i) => i.sku === oldSku)) continue;
     const updated = items.map((i) =>
@@ -179,8 +183,10 @@ async function relinkHistoricalItems(
     await sb.from('transactions').update({ items: updated }).eq('id', t.id);
   }
 
-  const { data: invoices } = await sb.from('invoices').select('id, items');
-  for (const inv of invoices ?? []) {
+  const invoices = await fetchAll<{ id: string; items: unknown }>((from, to) =>
+    sb.from('invoices').select('id, items').order('id', { ascending: true }).range(from, to)
+  );
+  for (const inv of invoices) {
     const items = inv.items as Item[];
     if (!items.some((i) => i.sku === oldSku)) continue;
     const updated = items.map((i) =>
