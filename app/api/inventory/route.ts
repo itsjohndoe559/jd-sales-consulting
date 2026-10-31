@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
+import { getOnHand } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 
 // Returns { sku: onHandNumber } computed as sum(change) grouped by sku.
+// Uses the shared paged getOnHand() so it counts every row, not just the
+// first 1,000.
 export async function GET() {
-  const sb = supabaseServer();
-  const { data, error } = await sb
-    .from('inventory_adjustments')
-    .select('sku, change');
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const onHand = await getOnHand();
+    return NextResponse.json({ onHand });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const onHand: Record<string, number> = {};
-  for (const row of data ?? []) {
-    onHand[row.sku] = (onHand[row.sku] ?? 0) + row.change;
-  }
-
-  return NextResponse.json({ onHand });
 }
 
 // Add stock ("Add Stock" action on the Inventory page). Also updates the
