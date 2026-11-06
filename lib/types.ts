@@ -14,7 +14,14 @@ export type LineItem = {
   qty: number;
 };
 
-export type PaymentMethod = 'Cash' | 'Zelle' | 'Apple Pay' | 'Cash App' | 'Other';
+export type PaymentMethod =
+  | 'Cash'
+  | 'Zelle'
+  | 'Apple Pay'
+  | 'Cash App'
+  | 'Square'
+  | 'PayPal'
+  | 'Other';
 
 export type Transaction = {
   id: string;

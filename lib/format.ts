@@ -142,7 +142,7 @@ export function channelFor(method: string): 'Cash' | 'Digital' {
 
 /**
  * 3-way channel split used by Daily Reports and Margin Analysis: Cash,
- * Other, and Digital (everything else - Zelle, Apple Pay, Cash App).
+ * Other, and Digital (everything else - Zelle, Apple Pay, Cash App, Square, PayPal).
  * This is the canonical classification other Cash/Digital/Other
  * breakdowns should match - reportMetrics.ts (the actual Daily Report,
  * which is also what gets emailed) uses this exact function.
