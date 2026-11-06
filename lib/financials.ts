@@ -252,7 +252,7 @@ export function summarizeWeek(week: Week, days: DayRow[]): WeekSummary {
       otherSales: totals.other,
       digitalTotal,
       taxesDeposit: totals.taxes,
-      cashDeposit: round2(totals.actualSales - totals.digital - totals.taxes),
+      cashDeposit: round2(totals.actualSales - digitalTotal - totals.taxes),
       voided: round2(totals.revenue - totals.actualSales),
     },
   };
