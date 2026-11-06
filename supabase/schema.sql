@@ -23,7 +23,7 @@ create table if not exists inventory_adjustments (
 create table if not exists transactions (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
-  payment_method text not null, -- 'Cash' | 'Zelle' | 'Apple Pay' | 'Cash App' | 'Other'
+  payment_method text not null, -- 'Cash' | 'Zelle' | 'Apple Pay' | 'Cash App' | 'Square' | 'PayPal' | 'Other'
   items jsonb not null,
   total numeric(10,2) not null,
   voided boolean not null default false
