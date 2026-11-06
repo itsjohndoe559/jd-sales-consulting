@@ -139,7 +139,7 @@ export default async function FinancialsDashboard() {
           <KpiTile label="Other Sales" value={money(sales.other)} />
           <KpiTile label="Transactions" value={String(sales.transactions)} />
           <KpiTile label="Void Value" value={money(sales.voidValue)} />
-          <KpiTile label="Avg Revenue" value={money(sales.avgRevenue)} sub="per week" />
+          <KpiTile label="Avg Revenue" value={money(sales.avgRevenue)} />
         </div>
       </section>
 

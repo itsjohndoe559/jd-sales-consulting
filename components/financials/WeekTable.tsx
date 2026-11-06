@@ -9,26 +9,25 @@ type Row = {
   label: string;
   key: keyof DayRow;
   kind: 'money' | 'count';
-  hint: string;
   strong?: boolean;
 };
 
 // Same rows, same order as the sheet's weekly tabs.
 const ROWS: Row[] = [
-  { label: 'Revenue', key: 'revenue', kind: 'money', hint: 'from site', strong: true },
-  { label: 'Actual Sales', key: 'actualSales', kind: 'money', hint: 'revenue x 0.8' },
-  { label: 'Cash Sales', key: 'cash', kind: 'money', hint: 'from site' },
-  { label: 'Digital Sales', key: 'digital', kind: 'money', hint: 'from site' },
-  { label: 'Other Sales', key: 'other', kind: 'money', hint: 'from site' },
-  { label: 'Cost of Goods', key: 'cogs', kind: 'money', hint: 'from site' },
-  { label: 'Net Profit', key: 'netProfit', kind: 'money', hint: 'actual sales - COGS', strong: true },
-  { label: 'Taxes', key: 'taxes', kind: 'money', hint: 'net profit x 0.08' },
-  { label: 'Bank', key: 'bank', kind: 'money', hint: 'actual sales - taxes' },
-  { label: 'Voided', key: 'voided', kind: 'money', hint: 'revenue x 0.2' },
-  { label: 'Total', key: 'total', kind: 'money', hint: 'bank + voided', strong: true },
-  { label: 'Transactions', key: 'transactions', kind: 'count', hint: 'from site' },
-  { label: 'Voided', key: 'voidedCount', kind: 'count', hint: 'manual' },
-  { label: 'Units on Hand', key: 'unitsOnHand', kind: 'count', hint: 'end of day' },
+  { label: 'Revenue', key: 'revenue', kind: 'money', strong: true },
+  { label: 'Actual Sales', key: 'actualSales', kind: 'money' },
+  { label: 'Cash Sales', key: 'cash', kind: 'money' },
+  { label: 'Digital Sales', key: 'digital', kind: 'money' },
+  { label: 'Other Sales', key: 'other', kind: 'money' },
+  { label: 'Cost of Goods', key: 'cogs', kind: 'money' },
+  { label: 'Net Profit', key: 'netProfit', kind: 'money', strong: true },
+  { label: 'Taxes', key: 'taxes', kind: 'money' },
+  { label: 'Bank', key: 'bank', kind: 'money' },
+  { label: 'Voided', key: 'voided', kind: 'money' },
+  { label: 'Total', key: 'total', kind: 'money', strong: true },
+  { label: 'Transactions', key: 'transactions', kind: 'count' },
+  { label: 'Voided', key: 'voidedCount', kind: 'count' },
+  { label: 'Units on Hand', key: 'unitsOnHand', kind: 'count' },
 ];
 
 function VoidedInput({ day, value }: { day: string; value: number }) {
@@ -71,15 +70,15 @@ export default function WeekTable({ summary }: { summary: WeekSummary }) {
   const { week, days, totals, deposit } = summary;
   const fmt = (r: Row, v: number) => (r.kind === 'money' ? money(v) : v.toLocaleString('en-US'));
 
-  const depositRows: [string, number, string][] = [
-    ['Revenue', deposit.revenue, 'week revenue'],
-    ['Actual Rev', deposit.actualRev, 'week actual sales'],
-    ['Digital Sales', deposit.digitalSales, 'week digital sales'],
-    ['Other Sales', deposit.otherSales, 'week other sales'],
-    ['Digital Total', deposit.digitalTotal, 'digital + other'],
-    ['Taxes Deposit', deposit.taxesDeposit, 'week taxes'],
-    ['Cash Deposit', deposit.cashDeposit, 'actual rev - digital total'],
-    ['Voided', deposit.voided, 'revenue - actual rev'],
+  const depositRows: [string, number][] = [
+    ['Revenue', deposit.revenue],
+    ['Actual Rev', deposit.actualRev],
+    ['Digital Sales', deposit.digitalSales],
+    ['Other Sales', deposit.otherSales],
+    ['Digital Total', deposit.digitalTotal],
+    ['Taxes Deposit', deposit.taxesDeposit],
+    ['Cash Deposit', deposit.cashDeposit],
+    ['Voided', deposit.voided],
   ];
 
   return (
@@ -105,7 +104,6 @@ export default function WeekTable({ summary }: { summary: WeekSummary }) {
               <tr key={r.label + r.key} className="border-b border-line last:border-0">
                 <td className="p-3 sticky left-0 bg-[#16181C]">
                   <div className={r.strong ? 'font-semibold' : ''}>{r.label}</div>
-                  <div className="text-[10px] text-slate">{r.hint}</div>
                 </td>
                 {days.map((d) => (
                   <td key={d.date} className={`p-3 text-right ${r.strong ? 'font-semibold' : ''}`}>
@@ -129,17 +127,16 @@ export default function WeekTable({ summary }: { summary: WeekSummary }) {
         <div className="card p-4 border-t-2 border-t-jdred">
           <div className="text-[11px] tracking-wide text-slate uppercase">Void Value</div>
           <div className="text-3xl font-bold mt-1 tabular">{money(summary.voidValue)}</div>
-          <div className="text-xs text-slate mt-1">week voided, rounded up to the nearest $5</div>
         </div>
 
         <div className="card md:col-span-2 overflow-hidden">
           <div className="px-4 pt-4 pb-2 text-sm font-semibold">Weekly Summary</div>
           <table className="w-full text-sm tabular">
             <tbody>
-              {depositRows.map(([label, value, hint]) => (
+              {depositRows.map(([label, value]) => (
                 <tr key={label} className="border-t border-line">
                   <td className="px-4 py-2">
-                    {label} <span className="text-[10px] text-slate ml-1">{hint}</span>
+                    {label}
                   </td>
                   <td className="px-4 py-2 text-right font-semibold">{money(value)}</td>
                 </tr>
