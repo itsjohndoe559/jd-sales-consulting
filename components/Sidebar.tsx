@@ -68,6 +68,16 @@ export default function Sidebar({
         })}
       </nav>
 
+      <div className="px-2 pb-2">
+        <Link
+          href="/financials"
+          onClick={onNavigate}
+          className="block text-center px-3 py-2 rounded text-xs font-bold tracking-widest border border-jdgreen text-jdgreen hover:bg-jdgreen hover:text-white"
+        >
+          FINANCIALS
+        </Link>
+      </div>
+
       <div className="px-5 py-4">
         <button
           onClick={logout}

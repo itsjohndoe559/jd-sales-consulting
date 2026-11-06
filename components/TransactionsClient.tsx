@@ -9,7 +9,15 @@ import TransactionRow from './TransactionRow';
 import { matchScore } from '@/lib/search';
 import type { Transaction, PaymentMethod } from '@/lib/types';
 
-const METHODS: PaymentMethod[] = ['Cash', 'Zelle', 'Apple Pay', 'Cash App', 'Other'];
+const METHODS: PaymentMethod[] = [
+  'Cash',
+  'Zelle',
+  'Apple Pay',
+  'Cash App',
+  'Square',
+  'PayPal',
+  'Other',
+];
 
 export default function TransactionsClient({
   transactions,

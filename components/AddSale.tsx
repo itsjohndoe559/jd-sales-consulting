@@ -14,6 +14,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   'Zelle',
   'Apple Pay',
   'Cash App',
+  'Square',
+  'PayPal',
   'Other',
 ];
 
